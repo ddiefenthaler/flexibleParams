@@ -17,6 +17,7 @@ flexibleParams.createGroup = function (name,params) {
                 group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content));
                 break;
             case "text":
+            case "password":
             case "number":
             case "range":
             case "logrange":    // combined number + range
