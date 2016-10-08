@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Flexible Parameters</title>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="flexibleParams.css" type="text/css">
+</head>
+<body>
+<form id="container" action="params.html" method="GET">
+<input type="submit" value="Abschicken" /><br />
+</form>
+<script type="text/javascript" src="flexibleParams.js"></script>
+<script type="text/javascript" src="flexibleParams_examples.js"></script>
+<script type="text/javascript">
+var params;
+params = ex01;
+//params = ex02;
+
+document.getElementById("container").appendChild(flexibleParams.createGroup("test",params));
+</script>
+</body>
+</html>

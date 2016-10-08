@@ -1,0 +1,29 @@
+.flexibleParams_container {
+    border: none;
+    display: inline-block;
+    margin: 0 2px 0 2px;
+    padding: 0;
+    float: left;
+}
+
+.flexibleParams_label::after {
+    content: ": ";
+}
+
+.flexibleParams_input {
+    margin: 0 2px 0 2px;
+}
+
+.flexibleParams_input[type="range"] {
+    padding: 0;
+}
+
+.flexibleParams_helper {
+    display: none
+}
+.flexibleParams_helper + fieldset {
+    display: none
+}
+.flexibleParams_helper:checked + fieldset {
+    display: inline-block;
+}
