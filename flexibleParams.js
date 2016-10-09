@@ -6,36 +6,96 @@
 // todo store form + information in history (except passwords)
 
 var flexibleParams = new Object();
+flexibleParams.config = new Object();
 
-flexibleParams.createGroup = function (name,params) {
+flexibleParams.config.getIdSuffix = function (quantityPosition) {
+    var quantityIdSuffix = "";
+    for(var i=0; i < quantityPosition.length; i++) {
+        quantityIdSuffix += "_"+quantityPosition[i];
+    }
+    return quantityIdSuffix;
+}
+flexibleParams.config.getLabelSuffix = function (quantityPosition) {
+    var quantityLabelSuffix = "";
+    for(var i=0; i < quantityPosition.length; i++) {
+        if(i == 0) {
+            quantityLabelSuffix += " "+quantityPosition[i];
+        } else {
+            quantityLabelSuffix += "."+quantityPosition[i];
+        }
+    }
+    return quantityLabelSuffix;
+}
+
+flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition = []) {
+    var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
+    
     var group = document.createElement("fieldset");
-    group.setAttribute("id",name);
+    group.setAttribute("id",name+quantityIdSuffix);
     group.setAttribute("class","flexibleParams_container");
-    for(var i = 0; i < params.length; i++) {
-        switch(params[i].type) {
-            case "group":       // fieldset
-                group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content));
-                break;
-            case "text":
-            case "password":
-            case "number":
-            case "range":
-            case "logrange":    // combined number + range
-                group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max));
-                break;
-            case "selection":   // implicit group for additional parameters
-                group.appendChild(flexibleParams.createSelection(params[i].name,params[i].values,params[i].label,params[i].value));
-                break;
-            default:
-                console.warn("unknown type: "+params[i].type);
-                break;
+    
+    var quantityCount;
+    if(quantity == undefined || (isNaN(quantity) && document.getElementById(quantity) == null)) {
+        quantityCount = 1;
+    } else if(!isNaN(quantity)) {
+        quantityCount = quantity;
+    } else {
+        // todo javascript event
+        // todo maxQuantity
+    }
+    
+    for(var k = 0; k < quantityCount; k++) {
+        var subgroupQuantityPosition = quantityPosition;
+        if(quantityCount > 1) {
+            subgroupQuantityPosition = subgroupQuantityPosition.concat(k);
+        }
+        
+        for(var i = 0; i < params.length; i++) {
+            switch(params[i].type) {
+                case "group":       // fieldset
+                    group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content,params[i].quantity,subgroupQuantityPosition));
+                    break;
+                case "text":
+                case "password":
+                case "number":
+                case "range":
+                case "logrange":    // combined number + range
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null) || params[i].quantity <= 1) {
+                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition));
+                    } else if(!isNaN(params[i].quantity)) {
+                        for(var j=0; j < params[i].quantity; j++) {
+                            group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition.concat(j)));
+                        }
+                    } else {
+                        // todo javascript event
+                        // todo maxQuantity
+                    }
+                    break;
+                case "selection":   // implicit group for additional parameters
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null) || params[i].quantity <= 1) {
+                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].values,params[i].label,params[i].value,subgroupQuantityPosition));
+                    } else if(!isNaN(params[i].quantity)) {
+                        for(var j=0; j < params[i].quantity; j++) {
+                            group.appendChild(flexibleParams.createSelection(params[i].name,params[i].values,params[i].label,params[i].value,subgroupQuantityPosition.concat(j)));
+                        }
+                    } else {
+                        // todo javascript event
+                        // todo maxQuantity
+                    }
+                    break;
+                default:
+                    console.warn("unknown parameter type: "+params[i].type);
+                    break;
+            }
         }
     }
     
     return group;
 }
 
-flexibleParams.createParam = function (name,type,labelStr,value,min,max) {
+flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition) {
+    var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
+    
     var cont = document.createElement("div");
     var input;
     var input_range;
@@ -43,16 +103,17 @@ flexibleParams.createParam = function (name,type,labelStr,value,min,max) {
     cont.setAttribute("class","flexibleParams_container");
     
     if(type == "logrange") {
-        input = flexibleParams.createInput(name,"number",value,min,max);
-        input_range = flexibleParams.createInput(name+"_range","range",undefined,min,max);
+        input = flexibleParams.createInput(name+quantityIdSuffix,"number",value,min,max);
+        input_range = flexibleParams.createInput(name+"_range"+quantityIdSuffix,"range",undefined,min,max);
         // todo event handlers
     } else {
-        input = flexibleParams.createInput(name,type,value,min,max);
+        input = flexibleParams.createInput(name+quantityIdSuffix,type,value,min,max);
     }
     if(labelStr) {
         var label = document.createElement("label");
-        label.appendChild(document.createTextNode(labelStr));
-        label.setAttribute("for",name);
+        var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
+        label.appendChild(document.createTextNode(labelStr+quantityLabelSuffix));
+        label.setAttribute("for",name+quantityIdSuffix);
         label.setAttribute("class","flexibleParams_label");
         
         cont.appendChild(label);
@@ -66,6 +127,7 @@ flexibleParams.createParam = function (name,type,labelStr,value,min,max) {
 }
 
 flexibleParams.createInput = function (name,type,value,min,max) {
+    
     var input = document.createElement("input");
     input.setAttribute("name",name);
     input.setAttribute("id",name);
@@ -84,21 +146,23 @@ flexibleParams.createInput = function (name,type,value,min,max) {
     return input;
 }
 
-flexibleParams.createSelection = function (name,values,labelStr,value) {
+flexibleParams.createSelection = function (name,values,labelStr,value, quantityPosition) {
+    var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     var set = document.createElement("fieldset");
     var cont = document.createElement("div");
     var sel = document.createElement("select");
     
     set.setAttribute("class","flexibleParams_container");
     cont.setAttribute("class","flexibleParams_container");
-    sel.setAttribute("name",name);
-    sel.setAttribute("id",name);
+    sel.setAttribute("name",name+quantityIdSuffix);
+    sel.setAttribute("id",name+quantityIdSuffix);
     sel.setAttribute("class","flexibleParams_input");
     
     if(labelStr) {
         var label = document.createElement("label");
-        label.appendChild(document.createTextNode(labelStr));
-        label.setAttribute("for",name);
+        var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
+        label.appendChild(document.createTextNode(labelStr+quantityLabelSuffix));
+        label.setAttribute("for",name+quantityIdSuffix);
         label.setAttribute("class","flexibleParams_label");
         
         cont.appendChild(label);

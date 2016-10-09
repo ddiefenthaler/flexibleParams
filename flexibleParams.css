@@ -6,6 +6,10 @@
     float: left;
 }
 
+.flexibleParams_linebreak {
+    clear: left;
+}
+
 .flexibleParams_label::after {
     content: ": ";
 }
@@ -21,9 +25,9 @@
 .flexibleParams_helper {
     display: none
 }
-.flexibleParams_helper + fieldset {
+.flexibleParams_helper + .flexibleParams_container {
     display: none
 }
-.flexibleParams_helper:checked + fieldset {
+.flexibleParams_helper:checked + .flexibleParams_container {
     display: inline-block;
 }

@@ -1,15 +1,19 @@
 var ex01 = // todo complete
 [
-{"name":"numUnits","label":"Number of Units","desc":"","type":"number"},
-{"name":"pattern","label":"Pattern","desc":"","type":"selection","values":[]},
+{"name":"numUnits","label":"Number of Units","desc":"","type":"number","min":1},
+{"name":"pattern","label":"Pattern","desc":"","type":"selection","values":[{"name":"TilePattern"},{"name":"ShiftTilePattern"}]},
 {"name":"numDim","label":"Number of Dimensions","desc":"","type":"range","min":1,"max":5},
-{"name":"memArrangement","label":"Memory Arrangement","desc":"","type":"selection","values":[]},
-{"name":"dim","label":"Dimenson","desc":"","type":"logrange"}
+{"name":"memArrangement","label":"Memory Arrangement","desc":"","type":"selection","values":[{"name":"ROW_MAJOR"},{"name":"COL_MAJOR"}]},
+{"name":"dim_group","type":"group","quantity":4,"content":[
+ {"name":"dim","label":"Dimenson","desc":"","type":"logrange"},
+ {"name":"dist","label":"Distribution","type":"selection",
+  "values":[{"name":"BLOCKED"},{"name":"CYCLIC"},{"name":"NONE"},{"name":"TILE","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]},{"name":"BLOCKCYCLIC","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]}]}
+ ]}
 ];
 
 var ex02 = // how to not do it
 [
-{"name":"numUnits","label":"Number of Units","type":"number",}, // Contained in Teamspec?
+{"name":"numUnits","label":"Number of Units","type":"number"}, // Contained in Teamspec?
 {"name":"pattern","label":"Pattern","type":"selection",
 "values":[
 {"name":"TilePattern<1>","params":[{"name":"size","label":"Size","type":"number","quantity":1},
