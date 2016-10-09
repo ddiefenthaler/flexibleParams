@@ -4,6 +4,7 @@ var ex01 = // todo complete
 {"name":"pattern","label":"Pattern","desc":"","type":"selection","values":[{"name":"TilePattern"},{"name":"ShiftTilePattern"}]},
 {"name":"numDim","label":"Number of Dimensions","desc":"","type":"range","min":1,"max":5},
 {"name":"memArrangement","label":"Memory Arrangement","desc":"","type":"selection","values":[{"name":"ROW_MAJOR"},{"name":"COL_MAJOR"}]},
+ {"type":"br"},
 {"name":"dim_group","type":"group","quantity":4,"content":[
  {"name":"dim","label":"Dimenson","desc":"","type":"logrange"},
  {"name":"dist","label":"Distribution","type":"selection",

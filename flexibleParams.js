@@ -5,6 +5,8 @@
 // todo store form + information in history (except passwords)
 
 var flexibleParams = new Object();
+flexibleParams.linebreak = false;
+
 flexibleParams.config = new Object();
 
 /**
@@ -40,6 +42,7 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  todo logrange
  *  selection
  *  todo selection multiple
+ *  br - meta
  */
 flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
@@ -47,6 +50,10 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
     var group = document.createElement("fieldset");
     group.setAttribute("id",name+quantityIdSuffix);
     group.setAttribute("class","flexibleParams_container");
+    if(flexibleParams.linebreak) {
+        group.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
+        flexibleParams.linebreak = false;
+    }
     
     var quantityCount;
     if(quantity == undefined || (isNaN(quantity) && document.getElementById(quantity) == null)) {
@@ -59,6 +66,9 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
     }
     
     for(var k = 0; k < quantityCount; k++) {
+        if(k != 0) {
+            flexibleParams.linebreak = true;
+        }
         var subgroupQuantityPosition = quantityPosition;
         if(quantityCount > 1) {
             subgroupQuantityPosition = subgroupQuantityPosition.concat(k);
@@ -97,6 +107,9 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                         // todo maxQuantity
                     }
                     break;
+                case "br":    // css obly linebreak
+                    flexibleParams.linebreak = true;
+                    break;
                 default:
                     console.warn("unknown parameter type: "+params[i].type);
                     break;
@@ -118,6 +131,10 @@ flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantit
     var input_range;
     
     cont.setAttribute("class","flexibleParams_container");
+    if(flexibleParams.linebreak) {
+        cont.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
+        flexibleParams.linebreak = false;
+    }
     
     if(type == "logrange") {
         input = flexibleParams.createInput(name+quantityIdSuffix,"number",value,min,max);
@@ -173,6 +190,10 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
     var sel = document.createElement("select");
     
     set.setAttribute("class","flexibleParams_container");
+    if(flexibleParams.linebreak) {
+        set.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
+        flexibleParams.linebreak = false;
+    }
     cont.setAttribute("class","flexibleParams_container");
     sel.setAttribute("name",name+quantityIdSuffix);
     sel.setAttribute("id",name+quantityIdSuffix);
