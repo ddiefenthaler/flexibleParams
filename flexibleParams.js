@@ -203,8 +203,8 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
         if(values[i].params != undefined) {
             var opt_radio = document.createElement("input");
             opt_radio.setAttribute("type","radio");
-            opt_radio.setAttribute("name",name+"_radio");
-            opt_radio.setAttribute("id",values[i].name+"_radio");
+            opt_radio.setAttribute("name",name+quantityIdSuffix+"_radio");
+            opt_radio.setAttribute("id",name+quantityIdSuffix+values[i].name+"_radio");
             opt_radio.setAttribute("class","flexibleParams_helper");
             if(i == 0) {
                 opt_radio.checked = true;
@@ -224,8 +224,8 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
     
     sel.onchange = function(e) {
         for(var i = 0; i < e.target.options.length; i++) {
-            if(document.getElementById(e.target.options[i].value+"_radio") != null) {
-                document.getElementById(e.target.options[i].value+"_radio").checked = e.target.options[i].selected;
+            if(document.getElementById(e.target.id+e.target.options[i].value+"_radio") != null) {
+                document.getElementById(e.target.id+e.target.options[i].value+"_radio").checked = e.target.options[i].selected;
             }
         }
     }
