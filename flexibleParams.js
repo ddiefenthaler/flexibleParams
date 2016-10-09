@@ -1,6 +1,5 @@
 // todo logrange javascript
 // todo selection-multiple
-// todo quantity
 // todo quantity javascript maxQuantity
 // todo css line break
 // todo store form + information in history (except passwords)
@@ -8,6 +7,9 @@
 var flexibleParams = new Object();
 flexibleParams.config = new Object();
 
+/**
+ * functions that allow to configure the numbering of labels
+ */
 flexibleParams.config.getIdSuffix = function (quantityPosition) {
     var quantityIdSuffix = "";
     for(var i=0; i < quantityPosition.length; i++) {
@@ -27,6 +29,18 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
     return quantityLabelSuffix;
 }
 
+/**
+ * creates a group (fieldset) with the specified contents and quantity
+ * supported content parameter types are:
+ *  group
+ *  text
+ *  password
+ *  number
+ *  range
+ *  todo logrange
+ *  selection
+ *  todo selection multiple
+ */
 flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
@@ -93,7 +107,10 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
     return group;
 }
 
-flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition) {
+/**
+ * creates a input field with specified type and values
+ */
+flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     var cont = document.createElement("div");
@@ -146,7 +163,10 @@ flexibleParams.createInput = function (name,type,value,min,max) {
     return input;
 }
 
-flexibleParams.createSelection = function (name,values,labelStr,value, quantityPosition) {
+/**
+ * creates a selection field with specified values
+ */
+flexibleParams.createSelection = function (name,values,labelStr,value, quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     var set = document.createElement("fieldset");
     var cont = document.createElement("div");
