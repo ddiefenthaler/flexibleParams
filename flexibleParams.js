@@ -1,7 +1,7 @@
 // todo logrange javascript
 // todo selection-multiple
+// todo quantity value s
 // todo quantity javascript maxQuantity
-// todo css line break
 // todo store form + information in history (except passwords)
 
 var flexibleParams = new Object();
@@ -107,7 +107,7 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                         // todo maxQuantity
                     }
                     break;
-                case "br":    // css obly linebreak
+                case "br":    // css only linebreak
                     flexibleParams.linebreak = true;
                     break;
                 default:
