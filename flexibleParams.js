@@ -56,11 +56,13 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
     }
     
     var quantityCount;
+    var quantityDynamic = false;
     if(quantity == undefined || (isNaN(quantity) && document.getElementById(quantity) == null)) {
         quantityCount = 1;
     } else if(!isNaN(quantity)) {
         quantityCount = quantity;
     } else {
+        quantityDynamic = true;
         // todo javascript event
         // todo maxQuantity
     }
@@ -84,28 +86,46 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                 case "number":
                 case "range":
                 case "logrange":    // combined number + range
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null) || params[i].quantity <= 1) {
-                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition));
+                    var subQuantityCount;
+                    var subQuantityDynamic = false;
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null)) {
+                        subQuantityCount = 1;
                     } else if(!isNaN(params[i].quantity)) {
-                        for(var j=0; j < params[i].quantity; j++) {
-                            group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition.concat(j)));
-                        }
+                        subQuantityCount = params[i].quantity;
                     } else {
+                        subQuantityDynamic = true;
                         // todo javascript event
                         // todo maxQuantity
+                    }
+                    
+                    for(var j=0; j < subQuantityCount; j++) {
+                        var subQuantityPosition = subgroupQuantityPosition;
+                        if(subQuantityCount > 1) {
+                            subQuantityPosition = subQuantityPosition.concat(k);
+                        }
+                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subQuantityPosition));
                     }
                     break;
                 case "selection":   // implicit group for additional parameters
                 case "selection-multiple":
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null) || params[i].quantity <= 1) {
-                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition));
+                    var subQuantityCount;
+                    var subQuantityDynamic = false;
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null)) {
+                        subQuantityCount = 1;
                     } else if(!isNaN(params[i].quantity)) {
-                        for(var j=0; j < params[i].quantity; j++) {
-                            group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition.concat(j)));
-                        }
+                        subQuantityCount = params[i].quantity;
                     } else {
+                        subQuantityDynamic = true;
                         // todo javascript event
                         // todo maxQuantity
+                    }
+                    
+                    for(var j=0; j < subQuantityCount; j++) {
+                        var subQuantityPosition = subgroupQuantityPosition;
+                        if(subQuantityCount > 1) {
+                            subQuantityPosition = subQuantityPosition.concat(k);
+                        }
+                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subQuantityPosition));
                     }
                     break;
                 case "br":    // css only linebreak
