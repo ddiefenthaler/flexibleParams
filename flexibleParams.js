@@ -1,8 +1,7 @@
 // todo logrange javascript
-// todo selection-multiple
-// todo quantity value s
 // todo quantity javascript maxQuantity
 // todo store form + information in history (except passwords)
+// todo concept graphics
 
 var flexibleParams = new Object();
 flexibleParams.linebreak = false;
@@ -11,6 +10,7 @@ flexibleParams.config = new Object();
 
 /**
  * functions that allow to configure the numbering of labels
+ * todo will not work like this
  */
 flexibleParams.config.getIdSuffix = function (quantityPosition) {
     var quantityIdSuffix = "";
@@ -96,11 +96,12 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                     }
                     break;
                 case "selection":   // implicit group for additional parameters
+                case "selection-multiple":
                     if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null) || params[i].quantity <= 1) {
-                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].values,params[i].label,params[i].value,subgroupQuantityPosition));
+                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition));
                     } else if(!isNaN(params[i].quantity)) {
                         for(var j=0; j < params[i].quantity; j++) {
-                            group.appendChild(flexibleParams.createSelection(params[i].name,params[i].values,params[i].label,params[i].value,subgroupQuantityPosition.concat(j)));
+                            group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition.concat(j)));
                         }
                     } else {
                         // todo javascript event
@@ -125,6 +126,14 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
  */
 flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
+    
+    for(var i=0; i < quantityPosition.length; i++) {
+        if(Array.isArray(value) && quantityPosition[i] < value.length) {
+            value = value[quantityPosition[i]];
+        } else {
+            break;
+        }
+    }
     
     var cont = document.createElement("div");
     var input;
@@ -183,8 +192,20 @@ flexibleParams.createInput = function (name,type,value,min,max) {
 /**
  * creates a selection field with specified values
  */
-flexibleParams.createSelection = function (name,values,labelStr,value, quantityPosition = []) {
+flexibleParams.createSelection = function (name,type,values,size,labelStr,value, quantityPosition = []) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
+    
+    for(var i=0; i < quantityPosition.length; i++) {
+        if(Array.isArray(value) && quantityPosition[i] < value.length &&
+           (type != "selection-multiple" ||
+           (type == "selection-multiple" && Array.isArray(value[i])))
+          ) {
+            value = value[quantityPosition[i]];
+        } else {
+            break;
+        }
+    }
+    
     var set = document.createElement("fieldset");
     var cont = document.createElement("div");
     var sel = document.createElement("select");
@@ -198,6 +219,12 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
     sel.setAttribute("name",name+quantityIdSuffix);
     sel.setAttribute("id",name+quantityIdSuffix);
     sel.setAttribute("class","flexibleParams_input");
+    if(type == "selection-multiple") {
+        sel.multiple = true;
+    }
+    if(size != undefined) {
+        sel.setAttribute("size",size);
+    }
     
     if(labelStr) {
         var label = document.createElement("label");
@@ -223,10 +250,14 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
         
         if(values[i].params != undefined) {
             var opt_radio = document.createElement("input");
-            opt_radio.setAttribute("type","radio");
+            if(type != "selection-multiple") {
+                opt_radio.setAttribute("type","radio");
+            } else {
+                opt_radio.setAttribute("type","checkbox");
+            }
             opt_radio.setAttribute("name",name+quantityIdSuffix+"_radio");
             opt_radio.setAttribute("id",name+quantityIdSuffix+values[i].name+"_radio");
-            opt_radio.setAttribute("class","flexibleParams_helper");
+            opt_radio.setAttribute("class","flexibleParams_selectionHelper");
             if(i == 0) {
                 opt_radio.checked = true;
             }
@@ -235,7 +266,12 @@ flexibleParams.createSelection = function (name,values,labelStr,value, quantityP
             set.appendChild(flexibleParams.createGroup(name+"_group_"+i,values[i].params));
         }
         
-        if((typeof value == "string" && value == values[i].name) || (typeof value == "number" && value == i)) {
+        if(value != undefined &&
+           ((typeof value == "string" && value == values[i].name) ||
+            (typeof value == "number" && value == i) ||
+            (type == "selection-multiple" && (value.includes(i) || value.includes(values[i].name)))
+           )
+          ) {
             opt.selected = true;
             if(values[i].params != undefined) {
                 opt_radio.checked = true;

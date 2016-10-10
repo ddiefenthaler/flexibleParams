@@ -22,12 +22,20 @@
     padding: 0;
 }
 
-.flexibleParams_helper {
-    display: none
+.flexibleParams_selectionHelper {
+    display: none;
 }
-.flexibleParams_helper + .flexibleParams_container {
-    display: none
+.flexibleParams_selectionHelper + .flexibleParams_container {
+    display: none;
 }
-.flexibleParams_helper:checked + .flexibleParams_container {
+.flexibleParams_selectionHelper:checked + .flexibleParams_container {
     display: inline-block;
 }
+
+.flexibleParams_quantityHelper {
+    display: none;
+}
+.flexibleParams_quantityHelper:checked ~ .flexibleParams_container {
+    display: none;
+}
+
