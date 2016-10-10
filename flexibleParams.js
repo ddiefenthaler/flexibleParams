@@ -299,13 +299,13 @@ flexibleParams.createSelection = function (name,type,values,size,labelStr,value,
         }
     }
     
-    sel.onchange = function(e) {
+    sel.addEventListener("change",function(e) {
         for(var i = 0; i < e.target.options.length; i++) {
             if(document.getElementById(e.target.id+e.target.options[i].value+"_radio") != null) {
                 document.getElementById(e.target.id+e.target.options[i].value+"_radio").checked = e.target.options[i].selected;
             }
         }
-    }
+    });
     
     return set;
 }
