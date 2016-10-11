@@ -7,6 +7,9 @@ var flexibleParams = new Object();
 flexibleParams.linebreak = false;
 
 flexibleParams.config = new Object();
+flexibleParams.config.maxQuantityDefault = 64;
+flexibleParams.config.maxQuantitySoftlimit = 256;
+flexibleParams.config.maxQuantityHardlimit = 4096;
 
 /**
  * functions that allow to configure the numbering of labels
@@ -41,10 +44,10 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  range
  *  todo logrange
  *  selection
- *  todo selection multiple
+ *  selection-multiple
  *  br - meta
  */
-flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition = []) {
+flexibleParams.createGroup = function (name,params,quantity = 1,maxQuantity,quantityPosition = [],root) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     var group = document.createElement("fieldset");
@@ -55,16 +58,42 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
         flexibleParams.linebreak = false;
     }
     
+    if(root == undefined) {
+        root = group;
+    }
+    
     var quantityCount;
     var quantityDynamic = false;
-    if(quantity == undefined || (isNaN(quantity) && document.getElementById(quantity) == null)) {
+    if(quantity == undefined || (isNaN(quantity) && root.querySelector("#"+quantity) == null)) {
         quantityCount = 1;
     } else if(!isNaN(quantity)) {
         quantityCount = quantity;
     } else {
         quantityDynamic = true;
-        // todo javascript event
-        // todo maxQuantity
+        quantityCount = flexibleParams.config.maxQuantityDefault;
+        if(!isNaN(root.querySelector("#"+quantity).max)) {
+            quantityCount = root.querySelector("#"+quantity).max*1;
+        }
+        if(!isNaN(maxQuantity) && maxQuantity*1 < quantityCount) {
+            quantityCount = maxQuantity*1;
+        }
+        
+        var onchange = function (e) {
+            if(!isNaN(e.target.value) && document.getElementById(name+quantityIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
+                document.getElementById(name+quantityIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
+            }
+        }
+        root.querySelector("#"+quantity).addEventListener("change",onchange);
+        root.querySelector("#"+quantity).addEventListener("input",onchange);
+    }
+    
+    if(quantityCount > flexibleParams.config.maxQuantityHardlimit) {
+        console.error("The given maximal quantity is too high: "+quantityCount+"\n"+
+                      "You can adjust flexibleParams.config.maxQuantityHardlimit to change this behaviour.");
+        quantityCount = flexibleParams.config.maxQuantitySoftlimit;
+    } else if(quantityCount > flexibleParams.config.maxQuantitySoftlimit) {
+        console.warn("The given maximal quantity is high: "+quantityCount+"\n"+
+                     "You can supress this warning by changing flexibleParams.config.maxQuantitySoftlimit.");
     }
     
     for(var k = 0; k < quantityCount; k++) {
@@ -79,7 +108,7 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
         for(var i = 0; i < params.length; i++) {
             switch(params[i].type) {
                 case "group":       // fieldset
-                    group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content,params[i].quantity,subgroupQuantityPosition));
+                    group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content,params[i].quantity,params[i].maxQuantity,subgroupQuantityPosition,root));
                     break;
                 case "text":
                 case "password":
@@ -88,7 +117,7 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                 case "logrange":    // combined number + range
                     var subQuantityCount;
                     var subQuantityDynamic = false;
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null)) {
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
                         subQuantityCount = 1;
                     } else if(!isNaN(params[i].quantity)) {
                         subQuantityCount = params[i].quantity;
@@ -110,7 +139,7 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                 case "selection-multiple":
                     var subQuantityCount;
                     var subQuantityDynamic = false;
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && document.getElementById(params[i].quantity) == null)) {
+                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
                         subQuantityCount = 1;
                     } else if(!isNaN(params[i].quantity)) {
                         subQuantityCount = params[i].quantity;
@@ -135,6 +164,19 @@ flexibleParams.createGroup = function (name,params,quantity = 1,quantityPosition
                     console.warn("unknown parameter type: "+params[i].type);
                     break;
             }
+        }
+        
+        if(quantityDynamic) {
+            var opt_radio = document.createElement("input");
+            opt_radio.setAttribute("type","radio");
+            opt_radio.setAttribute("name",name+quantityIdSuffix+"_quantityHelper");
+            opt_radio.setAttribute("id",name+quantityIdSuffix+"_quantityHelper_"+k);
+            opt_radio.setAttribute("class","flexibleParams_quantityHelper");
+            if(!isNaN(root.querySelector("#"+quantity).value) && (root.querySelector("#"+quantity).value*1)-1 == k) {
+                opt_radio.checked = true;
+            }
+        
+            group.appendChild(opt_radio);
         }
     }
     
@@ -275,8 +317,8 @@ flexibleParams.createSelection = function (name,type,values,size,labelStr,value,
             } else {
                 opt_radio.setAttribute("type","checkbox");
             }
-            opt_radio.setAttribute("name",name+quantityIdSuffix+"_radio");
-            opt_radio.setAttribute("id",name+quantityIdSuffix+values[i].name+"_radio");
+            opt_radio.setAttribute("name",name+quantityIdSuffix+"_selectionHelper");
+            opt_radio.setAttribute("id",name+quantityIdSuffix+values[i].name+"_selectionHelper");
             opt_radio.setAttribute("class","flexibleParams_selectionHelper");
             if(i == 0) {
                 opt_radio.checked = true;
@@ -301,8 +343,8 @@ flexibleParams.createSelection = function (name,type,values,size,labelStr,value,
     
     sel.addEventListener("change",function(e) {
         for(var i = 0; i < e.target.options.length; i++) {
-            if(document.getElementById(e.target.id+e.target.options[i].value+"_radio") != null) {
-                document.getElementById(e.target.id+e.target.options[i].value+"_radio").checked = e.target.options[i].selected;
+            if(document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper") != null) {
+                document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper").checked = e.target.options[i].selected;
             }
         }
     });

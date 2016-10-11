@@ -4,9 +4,9 @@ var ex01 = // todo complete
 {"name":"memArrangement","label":"Memory Arrangement","desc":"","type":"selection","values":[{"name":"ROW_MAJOR"},{"name":"COL_MAJOR"}]},
  {"type":"br"},
 {"name":"pattern","label":"Pattern","desc":"","type":"selection","values":[{"name":"TilePattern"},{"name":"ShiftTilePattern"}]},
-{"name":"numDim","label":"Number of Dimensions","desc":"","type":"range","min":1,"max":5},
+{"name":"numDim","label":"Number of Dimensions","desc":"","type":"range","value":2,"min":1,"max":5},
  {"type":"br"},
-{"name":"dim_group","type":"group","quantity":4,"content":[
+{"name":"dim_group","type":"group","quantity":"numDim","content":[
  {"name":"dim","label":"Extent Dimension","desc":"","type":"logrange"},
  {"name":"dist","label":"Distribution","type":"selection",
   "values":[{"name":"BLOCKED"},{"name":"CYCLIC"},{"name":"NONE"},{"name":"TILE","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]},{"name":"BLOCKCYCLIC","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]}]}
