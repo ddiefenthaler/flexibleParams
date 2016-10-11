@@ -47,7 +47,14 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  selection-multiple
  *  br - meta
  */
-flexibleParams.createGroup = function (name,params,quantity = 1,maxQuantity,quantityPosition = [],root) {
+flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantityPosition,root) {
+    if(quantity == undefined) {
+        quantity = 1;
+    }
+    if(quantityPosition == undefined) {
+        quantityPosition = [];
+    }
+    
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     var group = document.createElement("fieldset");
@@ -186,7 +193,11 @@ flexibleParams.createGroup = function (name,params,quantity = 1,maxQuantity,quan
 /**
  * creates a input field with specified type and values
  */
-flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition = []) {
+flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition) {
+    if(quantityPosition == undefined) {
+        quantityPosition = [];
+    }
+    
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     for(var i=0; i < quantityPosition.length; i++) {
@@ -254,7 +265,11 @@ flexibleParams.createInput = function (name,type,value,min,max) {
 /**
  * creates a selection field with specified values
  */
-flexibleParams.createSelection = function (name,type,values,size,labelStr,value, quantityPosition = []) {
+flexibleParams.createSelection = function (name,type,values,size,labelStr,value, quantityPosition) {
+    if(quantityPosition == undefined) {
+        quantityPosition = [];
+    }
+    
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     for(var i=0; i < quantityPosition.length; i++) {
