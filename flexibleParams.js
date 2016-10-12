@@ -91,7 +91,6 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
             return function (e) {
                 if(!isNaN(e.target.value) && document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
                     document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
-                    console.log(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1));
                 };
             }
         })();
@@ -110,7 +109,7 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
     }
     
     for(var k = 0; k < quantityCount; k++) {
-        if(k != 0) {
+        if(k != 0 && params.length != 1) {
             flexibleParams.linebreak = true;
         }
         var subgroupQuantityPosition = quantityPosition;
@@ -129,80 +128,24 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
                 case "number":
                 case "range":
                 case "logrange":    // combined number + range
-                    var subQuantityCount;
-                    var subQuantityDynamic = false;
                     if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
-                        subQuantityCount = 1;
-                    } else if(!isNaN(params[i].quantity)) {
-                        subQuantityCount = params[i].quantity;
+                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition));
                     } else {
-                        subQuantityDynamic = true;
-                        // tmp
-                        subQuantityCount = flexibleParams.config.maxQuantityDefault;
-                        if(!isNaN(root.querySelector("#"+params[i].quantity).max)) {
-                            subQuantityCount = root.querySelector("#"+params[i].quantity).max*1;
-                        }
-                        if(!isNaN(params[i].maxQuantity) && params[i].maxQuantity*1 < subQuantityCount) {
-                            subQuantityCount = params[i].maxQuantity*1;
-                        }
-                        
-                        var onchange = (function () {
-                            var tmpName = params[i].name;
-                            var tmpIdSuffix = flexibleParams.config.getIdSuffix(subgroupQuantityPosition);
-                            return function (e) {
-                                if(!isNaN(e.target.value) && document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
-                                    document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
-                                    console.log(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1));
-                                };
-                            }
-                        })();
-                        root.querySelector("#"+params[i].quantity).addEventListener("change",onchange);
-                        root.querySelector("#"+params[i].quantity).addEventListener("input",onchange);
-                        // tmp
-                    }
-                    
-                    for(var j=0; j < subQuantityCount; j++) {
-                        var subQuantityPosition = subgroupQuantityPosition;
-                        if(subQuantityCount > 1) {
-                            subQuantityPosition = subQuantityPosition.concat(k);
-                        }
-                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subQuantityPosition));
-                        // tmp
-                        if(subQuantityDynamic) {
-                            var opt_radio = document.createElement("input");
-                            opt_radio.setAttribute("type","radio");
-                            opt_radio.setAttribute("name",params[i].name+flexibleParams.config.getIdSuffix(subgroupQuantityPosition)+"_quantityHelper");
-                            opt_radio.setAttribute("id",params[i].name+flexibleParams.config.getIdSuffix(subgroupQuantityPosition)+"_quantityHelper_"+j);
-                            opt_radio.setAttribute("class","flexibleParams_quantityHelper");
-                            if(!isNaN(root.querySelector("#"+params[i].quantity).value) && (root.querySelector("#"+params[i].quantity).value*1)-1 == j) {
-                                opt_radio.checked = true;
-                            }
-                        
-                            group.appendChild(opt_radio);
-                        }
-                        // tmp
+                        var tmpQuantity = params[i].quantity;
+                        params[i].quantity = undefined;
+                        group.appendChild(flexibleParams.createGroup(params[i].name+"_quantityGroup",[params[i]],tmpQuantity,params[i].maxQuantity,subgroupQuantityPosition,root));
+                        params[i].quantity = tmpQuantity;
                     }
                     break;
                 case "selection":   // implicit group for additional parameters
                 case "selection-multiple":
-                    var subQuantityCount;
-                    var subQuantityDynamic = false;
                     if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
-                        subQuantityCount = 1;
-                    } else if(!isNaN(params[i].quantity)) {
-                        subQuantityCount = params[i].quantity;
+                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition));
                     } else {
-                        subQuantityDynamic = true;
-                        // todo javascript event
-                        // todo maxQuantity
-                    }
-                    
-                    for(var j=0; j < subQuantityCount; j++) {
-                        var subQuantityPosition = subgroupQuantityPosition;
-                        if(subQuantityCount > 1) {
-                            subQuantityPosition = subQuantityPosition.concat(k);
-                        }
-                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subQuantityPosition));
+                        var tmpQuantity = params[i].quantity;
+                        params[i].quantity = undefined;
+                        group.appendChild(flexibleParams.createGroup(params[i].name+"_quantityGroup",[params[i]],tmpQuantity,params[i].maxQuantity,subgroupQuantityPosition,root));
+                        params[i].quantity = tmpQuantity;
                     }
                     break;
                 case "br":    // css only linebreak
