@@ -1,5 +1,5 @@
 // todo logrange javascript
-// todo quantity javascript maxQuantity
+// todo nested quantity
 // todo store form + information in history (except passwords)
 // todo concept graphics
 
@@ -85,11 +85,17 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
             quantityCount = maxQuantity*1;
         }
         
-        var onchange = function (e) {
-            if(!isNaN(e.target.value) && document.getElementById(name+quantityIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
-                document.getElementById(name+quantityIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
+        var onchange = (function () {
+            var tmpName = name;
+            var tmpIdSuffix = quantityIdSuffix;
+            return function (e) {
+                if(!isNaN(e.target.value) && document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
+                    document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
+                    console.log(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1));
+                };
             }
-        }
+        })();
+        
         root.querySelector("#"+quantity).addEventListener("change",onchange);
         root.querySelector("#"+quantity).addEventListener("input",onchange);
     }
@@ -119,6 +125,7 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
                     break;
                 case "text":
                 case "password":
+                case "hidden":
                 case "number":
                 case "range":
                 case "logrange":    // combined number + range
@@ -130,8 +137,28 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
                         subQuantityCount = params[i].quantity;
                     } else {
                         subQuantityDynamic = true;
-                        // todo javascript event
-                        // todo maxQuantity
+                        // tmp
+                        subQuantityCount = flexibleParams.config.maxQuantityDefault;
+                        if(!isNaN(root.querySelector("#"+params[i].quantity).max)) {
+                            subQuantityCount = root.querySelector("#"+params[i].quantity).max*1;
+                        }
+                        if(!isNaN(params[i].maxQuantity) && params[i].maxQuantity*1 < subQuantityCount) {
+                            subQuantityCount = params[i].maxQuantity*1;
+                        }
+                        
+                        var onchange = (function () {
+                            var tmpName = params[i].name;
+                            var tmpIdSuffix = flexibleParams.config.getIdSuffix(subgroupQuantityPosition);
+                            return function (e) {
+                                if(!isNaN(e.target.value) && document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
+                                    document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)).checked = true;
+                                    console.log(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1));
+                                };
+                            }
+                        })();
+                        root.querySelector("#"+params[i].quantity).addEventListener("change",onchange);
+                        root.querySelector("#"+params[i].quantity).addEventListener("input",onchange);
+                        // tmp
                     }
                     
                     for(var j=0; j < subQuantityCount; j++) {
@@ -140,6 +167,20 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
                             subQuantityPosition = subQuantityPosition.concat(k);
                         }
                         group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subQuantityPosition));
+                        // tmp
+                        if(subQuantityDynamic) {
+                            var opt_radio = document.createElement("input");
+                            opt_radio.setAttribute("type","radio");
+                            opt_radio.setAttribute("name",params[i].name+flexibleParams.config.getIdSuffix(subgroupQuantityPosition)+"_quantityHelper");
+                            opt_radio.setAttribute("id",params[i].name+flexibleParams.config.getIdSuffix(subgroupQuantityPosition)+"_quantityHelper_"+j);
+                            opt_radio.setAttribute("class","flexibleParams_quantityHelper");
+                            if(!isNaN(root.querySelector("#"+params[i].quantity).value) && (root.querySelector("#"+params[i].quantity).value*1)-1 == j) {
+                                opt_radio.checked = true;
+                            }
+                        
+                            group.appendChild(opt_radio);
+                        }
+                        // tmp
                     }
                     break;
                 case "selection":   // implicit group for additional parameters
