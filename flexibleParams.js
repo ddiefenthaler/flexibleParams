@@ -1,6 +1,7 @@
 // todo logrange javascript
-// todo nested quantity
+// todo id-bound class names for container
 // todo store form + information in history (except passwords)
+// todo callback function for more customisation
 // todo concept graphics
 
 var flexibleParams = new Object();
@@ -11,6 +12,7 @@ flexibleParams.config.maxQuantityDefault = 64;
 flexibleParams.config.maxQuantitySoftlimit = 256;
 flexibleParams.config.maxQuantityHardlimit = 4096;
 
+// todo idea, introduce callback function to dynamically adjust those functions
 /**
  * functions that allow to configure the numbering of labels
  * todo will not work like this
