@@ -49,10 +49,11 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  selection-multiple
  *  br - meta
  */
-flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantityPosition,root) {
-    if(quantity == undefined) {
-        quantity = 1;
-    }
+flexibleParams.createGroup = function (param,quantityPosition,root) {
+    var name = param.name;
+    var params = param.content;
+    var quantity = param.quantity;
+    var maxQuantity = param.maxQuantity;
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
@@ -122,7 +123,7 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
         for(var i = 0; i < params.length; i++) {
             switch(params[i].type) {
                 case "group":       // fieldset
-                    group.appendChild(flexibleParams.createGroup(params[i].name,params[i].content,params[i].quantity,params[i].maxQuantity,subgroupQuantityPosition,root));
+                    group.appendChild(flexibleParams.createGroup(params[i],subgroupQuantityPosition,root));
                     break;
                 case "text":
                 case "password":
@@ -130,24 +131,28 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
                 case "number":
                 case "range":
                 case "logrange":    // combined number + range
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
-                        group.appendChild(flexibleParams.createParam(params[i].name,params[i].type,params[i].label,params[i].value,params[i].min,params[i].max,subgroupQuantityPosition));
-                    } else {
-                        var tmpQuantity = params[i].quantity;
-                        params[i].quantity = undefined;
-                        group.appendChild(flexibleParams.createGroup(params[i].name+"_quantityGroup",[params[i]],tmpQuantity,params[i].maxQuantity,subgroupQuantityPosition,root));
-                        params[i].quantity = tmpQuantity;
-                    }
-                    break;
+                    if(params[i].quantity == undefined ||
+                       (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)
+                      ) {
+                        group.appendChild(flexibleParams.createInputParam(params[i],subgroupQuantityPosition));
+                        break;
+                    }/* else {
+                        // see else branch in next case
+                    }*/
                 case "selection":   // implicit group for additional parameters
                 case "selection-multiple":
-                    if(params[i].quantity == undefined || (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)) {
-                        group.appendChild(flexibleParams.createSelection(params[i].name,params[i].type,params[i].values,params[i].size,params[i].label,params[i].value,subgroupQuantityPosition));
+                    if(params[i].quantity == undefined ||
+                       (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)
+                      ) {
+                        group.appendChild(flexibleParams.createSelection(params[i],subgroupQuantityPosition));
                     } else {
-                        var tmpQuantity = params[i].quantity;
+                        var tmpGroup = {"name":        params[i].name+"_quantityGroup",
+                                        "content":    [params[i]],
+                                        "quantity":    params[i].quantity,
+                                        "maxQuantity": params[i].maxQuantity};
                         params[i].quantity = undefined;
-                        group.appendChild(flexibleParams.createGroup(params[i].name+"_quantityGroup",[params[i]],tmpQuantity,params[i].maxQuantity,subgroupQuantityPosition,root));
-                        params[i].quantity = tmpQuantity;
+                        group.appendChild(flexibleParams.createGroup(tmpGroup,subgroupQuantityPosition,root));
+                        params[i].quantity = tmpGroup.quantity;
                     }
                     break;
                 case "br":    // css only linebreak
@@ -177,9 +182,15 @@ flexibleParams.createGroup = function (name,params,quantity,maxQuantity,quantity
 }
 
 /**
- * creates a input field with specified type and values
+ * creates a input field in a container with specified type and values
  */
-flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantityPosition) {
+flexibleParams.createInputParam = function (param, quantityPosition) {
+    var name = param.name;
+    var type = param.type;
+    var labelStr = param.label;
+    var value = param.value;
+    var min = param.min;
+    var max = param.max;
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
@@ -229,7 +240,6 @@ flexibleParams.createParam = function (name,type,labelStr,value,min,max, quantit
 }
 
 flexibleParams.createInput = function (name,type,value,min,max) {
-    
     var input = document.createElement("input");
     input.setAttribute("name",name);
     input.setAttribute("id",name);
@@ -251,7 +261,13 @@ flexibleParams.createInput = function (name,type,value,min,max) {
 /**
  * creates a selection field with specified values
  */
-flexibleParams.createSelection = function (name,type,values,size,labelStr,value, quantityPosition) {
+flexibleParams.createSelection = function (param, quantityPosition) {
+    var name = param.name;
+    var type = param.type;
+    var values = param.values;
+    var size = param.size;
+    var labelStr = param.label;
+    var value = param.value;
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
@@ -326,7 +342,9 @@ flexibleParams.createSelection = function (name,type,values,size,labelStr,value,
             }
             
             set.appendChild(opt_radio);
-            set.appendChild(flexibleParams.createGroup(name+"_group_"+i,values[i].params));
+            var tmpGroup = {"name": name+"_SelectionGroup_"+i,
+                            "content": values[i].params};
+            set.appendChild(flexibleParams.createGroup(tmpGroup, quantityPosition));
         }
         
         if(value != undefined &&
