@@ -37,8 +37,8 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
 }
 
 /**
- * creates a group (fieldset) with the specified contents and quantity
- * supported content parameter types are:
+ * creates the specified param and calls the appropriate function
+ * supported parameter types are:
  *  group
  *  text
  *  password
@@ -48,6 +48,55 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  selection
  *  selection-multiple
  *  br - meta
+ */
+flexibleParams.createParam = function (param,quantityPosition,root) {
+    var result = undefined;
+    switch(param.type) {
+        case "group":       // fieldset
+            result = flexibleParams.createGroup(param,quantityPosition,root);
+            break;
+        case "text":
+        case "password":
+        case "hidden":
+        case "number":
+        case "range":
+        case "logrange":    // combined number + range
+            if(param.quantity == undefined ||
+               (isNaN(param.quantity) && root.querySelector("#"+param.quantity) == null)
+              ) {
+                result = flexibleParams.createInputParam(param,quantityPosition);
+                break;
+            }/* else {
+                // see else branch in next case
+            }*/
+        case "selection":   // implicit group for additional parameters
+        case "selection-multiple":
+            if(param.quantity == undefined ||
+               (isNaN(param.quantity) && root.querySelector("#"+param.quantity) == null)
+              ) {
+                result = flexibleParams.createSelection(param,quantityPosition);
+            } else {
+                var tmpGroup = {"name":        param.name+"_quantityGroup",
+                                "content":    [param],
+                                "quantity":    param.quantity,
+                                "maxQuantity": param.maxQuantity};
+                param.quantity = undefined;
+                result = flexibleParams.createGroup(tmpGroup,quantityPosition,root);
+                param.quantity = tmpGroup.quantity;
+            }
+            break;
+        case "br":    // css only linebreak
+            flexibleParams.linebreak = true;
+            break;
+        default:
+            console.warn("unknown parameter type: "+param.type);
+            break;
+    }
+    return result;
+}
+
+/**
+ * creates a group (fieldset) with the specified contents and quantity
  */
 flexibleParams.createGroup = function (param,quantityPosition,root) {
     var name = param.name;
@@ -63,7 +112,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
     var group = document.createElement("fieldset");
     group.setAttribute("id",name+quantityIdSuffix);
     group.setAttribute("class","flexibleParams_container");
-    if(flexibleParams.linebreak) {
+    if(flexibleParams.linebreak) { // todo parallelism problem
         group.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
         flexibleParams.linebreak = false;
     }
@@ -120,47 +169,11 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
             subgroupQuantityPosition = subgroupQuantityPosition.concat(k);
         }
         
+        // Main for loop that creates the content parameter
         for(var i = 0; i < params.length; i++) {
-            switch(params[i].type) {
-                case "group":       // fieldset
-                    group.appendChild(flexibleParams.createGroup(params[i],subgroupQuantityPosition,root));
-                    break;
-                case "text":
-                case "password":
-                case "hidden":
-                case "number":
-                case "range":
-                case "logrange":    // combined number + range
-                    if(params[i].quantity == undefined ||
-                       (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)
-                      ) {
-                        group.appendChild(flexibleParams.createInputParam(params[i],subgroupQuantityPosition));
-                        break;
-                    }/* else {
-                        // see else branch in next case
-                    }*/
-                case "selection":   // implicit group for additional parameters
-                case "selection-multiple":
-                    if(params[i].quantity == undefined ||
-                       (isNaN(params[i].quantity) && root.querySelector("#"+params[i].quantity) == null)
-                      ) {
-                        group.appendChild(flexibleParams.createSelection(params[i],subgroupQuantityPosition));
-                    } else {
-                        var tmpGroup = {"name":        params[i].name+"_quantityGroup",
-                                        "content":    [params[i]],
-                                        "quantity":    params[i].quantity,
-                                        "maxQuantity": params[i].maxQuantity};
-                        params[i].quantity = undefined;
-                        group.appendChild(flexibleParams.createGroup(tmpGroup,subgroupQuantityPosition,root));
-                        params[i].quantity = tmpGroup.quantity;
-                    }
-                    break;
-                case "br":    // css only linebreak
-                    flexibleParams.linebreak = true;
-                    break;
-                default:
-                    console.warn("unknown parameter type: "+params[i].type);
-                    break;
+            var paramElem = flexibleParams.createParam(params[i],subgroupQuantityPosition,root);
+            if(paramElem != undefined) {
+                group.appendChild(paramElem);
             }
         }
         

@@ -1,6 +1,7 @@
 var ex01 = // todo complete
 {
 "name": "ex01",
+"type": "group",
 "content": [
 {"name":"numUnits","label":"Number of Units","type":"number","min":1},
 {"name":"memArrangement","label":"Memory Arrangement","type":"selection","values":[{"name":"ROW_MAJOR"},{"name":"COL_MAJOR"}]},
@@ -19,6 +20,7 @@ var ex01 = // todo complete
 var ex02 = // how to not do it
 {
 "name": "ex02",
+"type": "group",
 "content": [
 {"name":"numUnits","label":"Number of Units","type":"number"}, // Contained in Teamspec?
 {"name":"pattern","label":"Pattern","type":"selection",
