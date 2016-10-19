@@ -8,10 +8,12 @@
 <input id="rn" type="range" value="1" min="0" max="4" step="0.01" />
 <script type="text/javascript" src="logrange.js"></script>
 <script type="text/javascript">
-document.getElementById("nr").oninput  = function() { logrange.number_modified(document.getElementById("nr"),document.getElementById("rn")) };
-document.getElementById("rn").oninput  = function() { logrange.range_modified(document.getElementById("nr"),document.getElementById("rn")) };
-document.getElementById("rn").onchange = function() { logrange.update_range(document.getElementById("rn"),document.getElementById("rn").value) };
-logrange.number_modified(document.getElementById("nr"),document.getElementById("rn"));
+var number = document.getElementById("nr");
+var range = document.getElementById("rn");
+number.addEventListener("input",  function() { logrange.number_modified(number,range) });
+range.addEventListener( "input",  function() { logrange.range_modified(number,range) });
+range.addEventListener( "change", function() { logrange.update_range(number,range,range.value) });
+logrange.number_modified(number,range);
 </script>
 </body>
 </html>
