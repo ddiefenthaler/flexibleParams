@@ -27,19 +27,21 @@ logrange.range_modified = function (number,range) {
 }
 
 logrange.update_range = function (number,range,target) {
-    while(target >= range.max*1 - 1 && ((isNaN(number.max) || number.max == "") ||
-                                        range.max < logrange.log(number.max*1)
-                                       )
-         ) {
+    var hardMax = Infinity;
+    var hardMin = 0;
+    
+    if(!isNaN(number.max) && number.max != "") {
+        hardMax = logrange.log(number.max*1);
+    }
+    
+    while(target >= range.max*1 - 1 && range.max < hardMax) {
         range.min++;
         range.max++;
-        if((!isNaN(number.max) && number.max != "") &&
-           range.max > logrange.log(number.max*1)
-          ) {
+        if(range.max > hardMax) {
             range.max = logrange.log(number.max*1);
         }
     }
-    while(target <= range.min*1 + 1 && range.min > 0) {
+    while(target <= range.min*1 + 1 && range.min > hardMin) {
         range.max = Math.ceil(range.max);
         
         range.min--;
