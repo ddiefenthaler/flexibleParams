@@ -2,38 +2,16 @@
 <html>
 <head>
 <title>Logarithmischer Schieberegler</title>
-<script>
-function range_modified(number,range) {
-    number.value = Math.round(Math.pow(10,range.value));
-}
-
-function update_range(range,target) {
-    while(target >= range.max*1 - 1) {
-        range.min++;
-        range.max++;
-    }
-    while(target <= range.min*1 + 1 && range.min > 0) {
-        range.min--;
-        range.max--;
-    }
-}
-
-function number_modified(number,range) {
-    range_target = Math.log10(number.value*1);
-    update_range(range,range_target);
-    range.value = range_target;
-}
-
-function init() {
-    document.getElementById("nr").oninput  = function() { number_modified(document.getElementById("nr"),document.getElementById("rn")) };
-    document.getElementById("rn").oninput  = function() { range_modified(document.getElementById("nr"),document.getElementById("rn")) };
-    document.getElementById("rn").onchange = function() { update_range(document.getElementById("rn"),document.getElementById("rn").value) };
-    number_modified(document.getElementById("nr"),document.getElementById("rn"));
-}
-</script>
 </head>
-<body onload="init()">
+<body>
 <input id="nr" type="number" value="10" min="1" step="1" />
 <input id="rn" type="range" value="1" min="0" max="4" step="0.01" />
+<script type="text/javascript" src="logrange.js"></script>
+<script type="text/javascript">
+document.getElementById("nr").oninput  = function() { logrange.number_modified(document.getElementById("nr"),document.getElementById("rn")) };
+document.getElementById("rn").oninput  = function() { logrange.range_modified(document.getElementById("nr"),document.getElementById("rn")) };
+document.getElementById("rn").onchange = function() { logrange.update_range(document.getElementById("rn"),document.getElementById("rn").value) };
+logrange.number_modified(document.getElementById("nr"),document.getElementById("rn"));
+</script>
 </body>
 </html>
