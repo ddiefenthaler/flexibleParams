@@ -1,6 +1,5 @@
 // todo snappoints
-// todo custom min ?
-// todo custom round ?
+// todo custom round ?, logrange for comma values
 var logrange = new Object();
 
 logrange.config = new Object();
@@ -33,12 +32,19 @@ logrange.update_range = function (number,range,target) {
     if(!isNaN(number.max) && number.max != "") {
         hardMax = logrange.log(number.max*1);
     }
+    if(!isNaN(number.min) && number.min != "" && number.min > 0) {
+        hardMin = logrange.log(number.min*1);
+    }
+    
     
     while(target >= range.max*1 - 1 && range.max < hardMax) {
+        range.min = Math.floor(range.min);
+        
         range.min++;
         range.max++;
+        
         if(range.max > hardMax) {
-            range.max = logrange.log(number.max*1);
+            range.max = hardMax;
         }
     }
     while(target <= range.min*1 + 1 && range.min > hardMin) {
@@ -46,6 +52,10 @@ logrange.update_range = function (number,range,target) {
         
         range.min--;
         range.max--;
+        
+        if(range.min < hardMin) {
+            range.min = hardMin;
+        }
     }
 }
 
