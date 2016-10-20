@@ -1,11 +1,8 @@
-// todo snappoints
 // todo custom round ?, logrange for comma values
 var logrange = new Object();
 
 logrange.config = new Object();
 logrange.config.base = 2;
-// todo too global
-logrange.config.snappoints = [40,60,80,100];
 logrange.config.snap_dist = 0.08;
 
 logrange.log = function (x) {
@@ -22,9 +19,14 @@ logrange.log = function (x) {
 }
 
 logrange.range_modified = function (number,range) {
-    var snappoints = logrange.config.snappoints;
-    snappoints.sort(function(a,b) {return a-b;});
-    snappoints_range = snappoints.map(logrange.log);
+    var snappoints = [];
+    var snappoints_range = [];
+    if(range.dataset.snappoint != undefined) {
+        snappoints = JSON.parse(range.dataset.snappoints);
+        snappoints.sort(function(a,b) {return a-b;});
+        snappoints_range = snappoints.map(logrange.log);
+    }
+    
     for(var i=0; i < snappoints_range.length; i++) {
         if(Math.abs(snappoints_range[i] - range.value) < logrange.config.snap_dist) {
             number.value = snappoints[i];
