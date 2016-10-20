@@ -12,19 +12,14 @@ flexibleParams.config.maxQuantityDefault = 64;
 flexibleParams.config.maxQuantitySoftlimit = 256;
 flexibleParams.config.maxQuantityHardlimit = 4096;
 
-// todo idea, introduce callback function to dynamically adjust those functions
-/**
- * functions that allow to configure the numbering of labels
- * todo will not work like this
- */
-flexibleParams.config.getIdSuffix = function (quantityPosition) {
+flexibleParams.getIdSuffixDefault = function (quantityPosition) {
     var quantityIdSuffix = "";
     for(var i=0; i < quantityPosition.length; i++) {
         quantityIdSuffix += "_"+quantityPosition[i];
     }
     return quantityIdSuffix;
 }
-flexibleParams.config.getLabelSuffix = function (quantityPosition) {
+flexibleParams.getLabelSuffixDefault = function (quantityPosition) {
     var quantityLabelSuffix = "";
     for(var i=0; i < quantityPosition.length; i++) {
         if(i == 0) {
@@ -35,6 +30,15 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
     }
     return quantityLabelSuffix;
 }
+
+// todo idea, introduce callback function to dynamically adjust those functions
+/**
+ * functions that allow to configure the numbering of labels
+ * The default can be restored by setting them back to
+ * flexibleParams.getIdSuffixDefault and flexibleParams.getLabelSuffixDefault.
+ */
+flexibleParams.config.getIdSuffix = flexibleParams.getIdSuffixDefault;
+flexibleParams.config.getLabelSuffix = flexibleParams.getLabelSuffixDefault;
 
 /**
  * creates the specified param and calls the appropriate function
@@ -50,6 +54,7 @@ flexibleParams.config.getLabelSuffix = function (quantityPosition) {
  *  br - meta
  */
 flexibleParams.createParam = function (param,quantityPosition,root) {
+    var quantity = param.quantity;
     var result = undefined;
     switch(param.type) {
         case "group":       // fieldset
@@ -61,8 +66,8 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
         case "number":
         case "range":
         case "logrange":    // combined number + range
-            if(param.quantity == undefined ||
-               (isNaN(param.quantity) && root.querySelector("#"+param.quantity) == null)
+            if(quantity == undefined ||
+               (isNaN(quantity) && root.querySelector("#"+quantity) == null)
               ) {
                 result = flexibleParams.createInputParam(param,quantityPosition);
                 break;
@@ -71,8 +76,8 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
             }*/
         case "selection":   // implicit group for additional parameters
         case "selection-multiple":
-            if(param.quantity == undefined ||
-               (isNaN(param.quantity) && root.querySelector("#"+param.quantity) == null)
+            if(quantity == undefined ||
+               (isNaN(quantity) && root.querySelector("#"+quantity) == null)
               ) {
                 result = flexibleParams.createSelection(param,quantityPosition);
             } else {
@@ -82,7 +87,7 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
                                 "maxQuantity": param.maxQuantity};
                 param.quantity = undefined;
                 result = flexibleParams.createGroup(tmpGroup,quantityPosition,root);
-                param.quantity = tmpGroup.quantity;
+                param.quantity = quantity;
             }
             break;
         case "br":    // css only linebreak
@@ -99,10 +104,7 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
  * creates a group (fieldset) with the specified contents and quantity
  */
 flexibleParams.createGroup = function (param,quantityPosition,root) {
-    var name = param.name;
-    var params = param.content;
     var quantity = param.quantity;
-    var maxQuantity = param.maxQuantity;
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
@@ -110,7 +112,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     var group = document.createElement("fieldset");
-    group.setAttribute("id",name+quantityIdSuffix);
+    group.setAttribute("id",param.name+quantityIdSuffix);
     group.setAttribute("class","flexibleParams_container");
     if(flexibleParams.linebreak) { // todo parallelism problem
         group.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
@@ -133,12 +135,12 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
         if(!isNaN(root.querySelector("#"+quantity).max)) {
             quantityCount = root.querySelector("#"+quantity).max*1;
         }
-        if(!isNaN(maxQuantity) && maxQuantity*1 < quantityCount) {
-            quantityCount = maxQuantity*1;
+        if(!isNaN(param.maxQuantity) && param.maxQuantity*1 < quantityCount) {
+            quantityCount = param.maxQuantity*1;
         }
         
         var onchange = (function () {
-            var tmpName = name;
+            var tmpName = param.name;
             var tmpIdSuffix = quantityIdSuffix;
             return function (e) {
                 if(!isNaN(e.target.value) && document.getElementById(tmpName+tmpIdSuffix+"_quantityHelper_"+(e.target.value-1)) != null) {
@@ -161,7 +163,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
     }
     
     for(var k = 0; k < quantityCount; k++) {
-        if(k != 0 && params.length != 1) {
+        if(k != 0 && param.content.length != 1) {
             flexibleParams.linebreak = true;
         }
         var subgroupQuantityPosition = quantityPosition;
@@ -170,8 +172,8 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
         }
         
         // Main for loop that creates the content parameter
-        for(var i = 0; i < params.length; i++) {
-            var paramElem = flexibleParams.createParam(params[i],subgroupQuantityPosition,root);
+        for(var i = 0; i < param.content.length; i++) {
+            var paramElem = flexibleParams.createParam(param.content[i],subgroupQuantityPosition,root);
             if(paramElem != undefined) {
                 group.appendChild(paramElem);
             }
@@ -180,8 +182,8 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
         if(quantityDynamic) {
             var opt_radio = document.createElement("input");
             opt_radio.setAttribute("type","radio");
-            opt_radio.setAttribute("name",name+quantityIdSuffix+"_quantityHelper");
-            opt_radio.setAttribute("id",name+quantityIdSuffix+"_quantityHelper_"+k);
+            opt_radio.setAttribute("name",param.name+quantityIdSuffix+"_quantityHelper");
+            opt_radio.setAttribute("id",param.name+quantityIdSuffix+"_quantityHelper_"+k);
             opt_radio.setAttribute("class","flexibleParams_quantityHelper");
             if(!isNaN(root.querySelector("#"+quantity).value) && (root.querySelector("#"+quantity).value*1)-1 == k) {
                 opt_radio.checked = true;
@@ -200,7 +202,6 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
 flexibleParams.createInputParam = function (param, quantityPosition) {
     var name = param.name;
     var type = param.type;
-    var labelStr = param.label;
     var value = param.value;
     var min = param.min;
     var max = param.max;
@@ -235,10 +236,10 @@ flexibleParams.createInputParam = function (param, quantityPosition) {
     } else {
         input = flexibleParams.createInput(name+quantityIdSuffix,type,value,min,max);
     }
-    if(labelStr) {
+    if(param.label) {
         var label = document.createElement("label");
         var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
-        label.appendChild(document.createTextNode(labelStr+quantityLabelSuffix));
+        label.appendChild(document.createTextNode(param.label+quantityLabelSuffix));
         label.setAttribute("for",name+quantityIdSuffix);
         label.setAttribute("class","flexibleParams_label");
         
@@ -279,7 +280,6 @@ flexibleParams.createSelection = function (param, quantityPosition) {
     var type = param.type;
     var values = param.values;
     var size = param.size;
-    var labelStr = param.label;
     var value = param.value;
     if(quantityPosition == undefined) {
         quantityPosition = [];
@@ -318,10 +318,10 @@ flexibleParams.createSelection = function (param, quantityPosition) {
         sel.setAttribute("size",size);
     }
     
-    if(labelStr) {
+    if(param.label) {
         var label = document.createElement("label");
         var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
-        label.appendChild(document.createTextNode(labelStr+quantityLabelSuffix));
+        label.appendChild(document.createTextNode(param.label+quantityLabelSuffix));
         label.setAttribute("for",name+quantityIdSuffix);
         label.setAttribute("class","flexibleParams_label");
         
