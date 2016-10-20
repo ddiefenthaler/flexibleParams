@@ -204,6 +204,7 @@ flexibleParams.createInputParam = function (param, quantityPosition) {
     var value = param.value;
     var min = param.min;
     var max = param.max;
+    var step = param.step;
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
@@ -229,11 +230,22 @@ flexibleParams.createInputParam = function (param, quantityPosition) {
     }
     
     if(type == "logrange") {
-        input = flexibleParams.createInput(name+quantityIdSuffix,"number",value,min,max);
-        input_range = flexibleParams.createInput(name+"_range"+quantityIdSuffix,"range",undefined,min,max);
-        // todo event handlers
+        input = flexibleParams.createInput(name+quantityIdSuffix,"number",value,min,max,step);
+        if(typeof logrange == "object") {
+            input_range = flexibleParams.createInput(name+"_range"+quantityIdSuffix,"range",undefined,0,6,0.01);
+            if(param.snappoints != undefined) {
+                input_range.dataset.snappoints = JSON.stringify(param.snappoints);
+            }
+            
+            input.addEventListener("input", function() { logrange.number_modified(input,input_range) });
+            input_range.addEventListener("input", function() { logrange.range_modified(input,input_range) });
+            input_range.addEventListener("change", function() { logrange.update_range(input,input_range,input_range.value) });
+            logrange.number_modified(input,input_range);
+        } else {
+            console.error("include the script logrange.js before calling this script");
+        }
     } else {
-        input = flexibleParams.createInput(name+quantityIdSuffix,type,value,min,max);
+        input = flexibleParams.createInput(name+quantityIdSuffix,type,value,min,max,step);
     }
     if(labelStr) {
         var label = document.createElement("label");
@@ -245,14 +257,14 @@ flexibleParams.createInputParam = function (param, quantityPosition) {
         cont.appendChild(label);
     }
     cont.appendChild(input);
-    if(type == "logrange") {
+    if(type == "logrange" && typeof logrange == "object") {
         cont.appendChild(input_range);
     }
     
     return cont;
 }
 
-flexibleParams.createInput = function (name,type,value,min,max) {
+flexibleParams.createInput = function (name,type,value,min,max,step) {
     var input = document.createElement("input");
     input.setAttribute("name",name);
     input.setAttribute("id",name);
@@ -266,6 +278,9 @@ flexibleParams.createInput = function (name,type,value,min,max) {
     }
     if(max != undefined) {
         input.setAttribute("max",max);
+    }
+    if(step != undefined) {
+        input.setAttribute("step",step);
     }
     
     return input;
