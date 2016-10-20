@@ -5,7 +5,8 @@ var logrange = new Object();
 logrange.config = new Object();
 logrange.config.base = 2;
 // todo too global
-logrange.config.snappoints = [];
+logrange.config.snappoints = [40,60,80,100];
+logrange.config.snap_dist = 0.08;
 
 logrange.log = function (x) {
     switch(logrange.config.base) {
@@ -16,13 +17,24 @@ logrange.log = function (x) {
         case Math.E:
             return Math.log(x);
         default:
-            return Math.log(number.max*1)/Math.log(logrange.config.base);
+            return Math.log(x)/Math.log(logrange.config.base);
     }
 }
 
 logrange.range_modified = function (number,range) {
+    var snappoints = logrange.config.snappoints;
+    snappoints.sort(function(a,b) {return a-b;});
+    snappoints_range = snappoints.map(logrange.log);
+    for(var i=0; i < snappoints_range.length; i++) {
+        if(Math.abs(snappoints_range[i] - range.value) < logrange.config.snap_dist) {
+            number.value = snappoints[i];
+            return;
+        }
+        if(range.value < snappoints_range[i] + logrange.config.snap_dist) {
+            break;
+        }
+    }
     number.value = Math.round(Math.pow(logrange.config.base,range.value));
-    // todo snappoints
 }
 
 logrange.update_range = function (number,range,target) {
