@@ -101,11 +101,11 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
         case "number":
         case "range":
         case "logrange":
-            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList);
+            param.value = flexibleParams.getParamValues(param,root,quantityCountList);
             break;
         case "selection":
-        case "selection-multiple": // todo multiple ?
-            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList);
+        case "selection-multiple":
+            param.value = flexibleParams.getParamValues(param,root,quantityCountList);
             // todo iterate over param.values
             break;
         case "br":
@@ -117,17 +117,28 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
 /**
  * returns an array with the values contained in the elements
  */
-flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition) {
+flexibleParams.getParamValues = function (param,root,quantityCountList,quantityPosition) {
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
     
     if(quantityCountList.length == 0) {
-        return root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).value;
+        if(param.type == "selection-multiple") {
+            var result = [];
+            var options = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).options;
+            for(var i=0; i < options.length; i++) {
+                if(options[i].selected) {
+                    result.push(options[i].value);
+                }
+            }
+            return result;
+        } else {
+            return root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).value;
+        }
     } else {
         var result = [];
         for(var i=0; i < quantityCountList[0]; i++) {
-            result.push(flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList.slice(1),quantityPosition.concat(i)));
+            result.push(flexibleParams.getParamValues(param,root,quantityCountList.slice(1),quantityPosition.concat(i)));
         }
         return result;
     }
