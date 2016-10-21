@@ -117,14 +117,17 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
 /**
  * returns an array with the values contained in the elements
  */
-flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList) {
+flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition) {
+    if(quantityPosition == undefined) {
+        quantityPosition = [];
+    }
+    
     if(quantityCountList.length == 0) {
-        return root.querySelector("#"+param.name).value;
+        return root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).value;
     } else {
         var result = [];
         for(var i=0; i < quantityCountList[0]; i++) {
-            var tmpParam = {"name": param.name+flexibleParams.config.getIdSuffix([i])};
-            result.push(flexibleParams.getParamValues(tmpParam,root,withIrrelevant,exceptPasswords,quantityCountList.slice(1)));
+            result.push(flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList.slice(1),quantityPosition.concat(i)));
         }
         return result;
     }
