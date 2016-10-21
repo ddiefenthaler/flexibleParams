@@ -106,7 +106,17 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
         case "selection":
         case "selection-multiple":
             param.value = flexibleParams.getParamValues(param,root,quantityCountList);
-            // todo iterate over param.values
+            for(var i = 0; i < param.values.length; i++) {
+                if(param.values[i].params != undefined &&
+                   (withIrrelevant || param.value == param.values[i].name   // todo too global ....
+                                   || (Array.isArray(param.value) && param.values.indexOf(param.values[i].name) != -1))
+                  ) {
+                    console.log(param.values[i]);
+                    for(var j = 0; j < param.values[i].params.length; j++) {
+                        flexibleParams.storeParamValues(param.values[i].params[j],root,withIrrelevant,exceptPasswords,quantityCountList);
+                    }
+                }
+            }
             break;
         case "br":
         default:
@@ -123,9 +133,10 @@ flexibleParams.getParamValues = function (param,root,quantityCountList,quantityP
     }
     
     if(quantityCountList.length == 0) {
+        var paramElem = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition));
         if(param.type == "selection-multiple") {
             var result = [];
-            var options = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).options;
+            var options = paramElem.options;
             for(var i=0; i < options.length; i++) {
                 if(options[i].selected) {
                     result.push(options[i].value);
@@ -133,7 +144,7 @@ flexibleParams.getParamValues = function (param,root,quantityCountList,quantityP
             }
             return result;
         } else {
-            return root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)).value;
+            return paramElem.value;
         }
     } else {
         var result = [];

@@ -12,7 +12,7 @@ var ex01 = // todo complete
 {"name":"dim_group","type":"group","quantity":"numDim","content":[
  {"name":"dim","label":"Extent Dimension","type":"logrange"},
  {"name":"dist","label":"Distribution","type":"selection",
-  "values":[{"name":"BLOCKED"},{"name":"CYCLIC"},{"name":"NONE"},{"name":"TILE","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]},{"name":"BLOCKCYCLIC","params":[{"name":"blockSize","label":"Block Size","type":"number","quantity":1}]}]}
+  "values":[{"name":"BLOCKED"},{"name":"CYCLIC"},{"name":"NONE"},{"name":"TILE","params":[{"name":"TILE_blockSize","label":"Block Size","type":"number","quantity":1}]},{"name":"BLOCKCYCLIC","params":[{"name":"BLOCKCYCLIC_blockSize","label":"Block Size","type":"number","quantity":1}]}]}
  ]}
 ]
 };
