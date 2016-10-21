@@ -16,7 +16,14 @@ var params;
 param = ex01;
 //param = ex02;
 
-document.getElementById("container").appendChild(flexibleParams.createParam(param));
+if(history.state != null) {
+    param = history.state;
+}
+
+var root = flexibleParams.createParam(param);
+document.getElementById("container").appendChild(root);
+
+window.addEventListener("beforeunload",function(e) { flexibleParams.storeParamValues(param,root,true,true); history.replaceState(param,"") });
 </script>
 </body>
 </html>

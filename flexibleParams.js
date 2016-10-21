@@ -5,7 +5,7 @@
 // todo concept graphics
 
 var flexibleParams = new Object();
-flexibleParams.linebreak = false;
+flexibleParams.linebreak = false;   // todo too global
 
 flexibleParams.config = new Object();
 flexibleParams.config.maxQuantityDefault = 64;
@@ -39,6 +39,96 @@ flexibleParams.getLabelSuffixDefault = function (quantityPosition) {
  */
 flexibleParams.config.getIdSuffix = flexibleParams.getIdSuffixDefault;
 flexibleParams.config.getLabelSuffix = flexibleParams.getLabelSuffixDefault;
+
+/**
+ * stores the values recursive in the given argument param
+ */
+flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList) {
+    var quantity = param.quantity;
+    if(withIrrelevant == undefined) {
+        withIrrelevant = false;
+    }
+    if(exceptPasswords == undefined) {
+        exceptPasswords = false;
+    }
+    if(quantityCountList == undefined) {
+        quantityCountList = [];
+    }
+    
+    var quantityCount;
+    if(quantity == undefined || (isNaN(quantity) && root.querySelector("#"+quantity) == null)) {
+        quantityCount = 1;
+    } else if(!isNaN(quantity)) {
+        quantityCount = quantity;
+        
+        if(quantityCount > 1) {
+            quantityCountList = quantityCountList.concat(quantityCount);
+        }
+    } else {
+        quantityCount = flexibleParams.config.maxQuantityDefault;
+        if(!isNaN(root.querySelector("#"+quantity).max)) {
+            quantityCount = root.querySelector("#"+quantity).max*1;
+        }
+        if(!isNaN(param.maxQuantity) && param.maxQuantity*1 < quantityCount) {
+            quantityCount = param.maxQuantity*1;
+        }
+        var tmpQuantityCount = quantityCount;
+        
+        if(!withIrrelevant && !isNaN(root.querySelector("#"+quantity).value)
+                           && root.querySelector("#"+quantity).value > 0
+                           && root.querySelector("#"+quantity).value < quantityCount
+          ) {
+            quantityCount = root.querySelector("#"+quantity).value*1;
+        }
+        
+        if(tmpQuantityCount > 1) {
+            quantityCountList = quantityCountList.concat(quantityCount);
+        }
+    }
+    
+    switch(param.type) {
+        case "group":
+            for(var i = 0; i < param.content.length; i++) {
+                flexibleParams.storeParamValues(param.content[i],root,withIrrelevant,exceptPasswords,quantityCountList);
+            }
+            break;
+        case "password":
+            if(exceptPasswords) {
+                break;
+            }
+        case "text":
+        case "hidden":
+        case "number":
+        case "range":
+        case "logrange":
+            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList);
+            break;
+        case "selection":
+        case "selection-multiple": // todo multiple ?
+            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList);
+            // todo iterate over param.values
+            break;
+        case "br":
+        default:
+            break;
+    }
+}
+
+/**
+ * returns an array with the values contained in the elements
+ */
+flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList) {
+    if(quantityCountList.length == 0) {
+        return root.querySelector("#"+param.name).value;
+    } else {
+        var result = [];
+        for(var i=0; i < quantityCountList[0]; i++) {
+            var tmpParam = {"name": param.name+flexibleParams.config.getIdSuffix([i])};
+            result.push(flexibleParams.getParamValues(tmpParam,root,withIrrelevant,exceptPasswords,quantityCountList.slice(1)));
+        }
+        return result;
+    }
+}
 
 /**
  * creates the specified param and calls the appropriate function
