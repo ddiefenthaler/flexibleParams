@@ -1,3 +1,4 @@
+// todo dispatch change event number-field
 // todo custom round ?, logrange for comma values
 var logrange = new Object();
 
@@ -27,15 +28,19 @@ logrange.range_modified = function (number,range) {
         snappoints_range = snappoints.map(logrange.log);
     }
     
+    var change = new Event("change");
+    
     for(var i=0; i < snappoints_range.length; i++) {
         if(Math.abs(snappoints_range[i] - range.value) < logrange.config.snap_dist) {
             number.value = snappoints[i];
+            number.dispatchEvent(change);
             return;
         }
         if(range.value < snappoints_range[i] + logrange.config.snap_dist) {
             break;
         }
     }
+    number.dispatchEvent(change);
     number.value = Math.round(Math.pow(logrange.config.base,range.value));
 }
 
