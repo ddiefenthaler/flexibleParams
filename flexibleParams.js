@@ -130,7 +130,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
     } else {
         quantityDynamic = true;
         quantityCount = flexibleParams.config.maxQuantityDefault;
-        if(!isNaN(root.querySelector("#"+quantity).max)) {
+        if(!isNaN(root.querySelector("#"+quantity).max) && root.querySelector("#"+quantity).max != "") {
             quantityCount = root.querySelector("#"+quantity).max*1;
         }
         if(!isNaN(maxQuantity) && maxQuantity*1 < quantityCount) {

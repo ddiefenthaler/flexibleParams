@@ -1,4 +1,3 @@
-// todo dispatch change event number-field
 // todo custom round ?, logrange for comma values
 var logrange = new Object();
 
