@@ -1,6 +1,7 @@
 // todo logrange javascript
 // todo id-bound class names for container
 // todo store form + information in history (except passwords)
+// todo code cleaning
 // todo callback function for more customisation
 // todo concept graphics
 
@@ -43,7 +44,7 @@ flexibleParams.config.getLabelSuffix = flexibleParams.getLabelSuffixDefault;
 /**
  * stores the values recursive in the given argument param
  */
-flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList) {
+flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition) {
     var quantity = param.quantity;
     if(withIrrelevant == undefined) {
         withIrrelevant = false;
@@ -89,7 +90,7 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
     switch(param.type) {
         case "group":
             for(var i = 0; i < param.content.length; i++) {
-                flexibleParams.storeParamValues(param.content[i],root,withIrrelevant,exceptPasswords,quantityCountList);
+                flexibleParams.storeParamValues(param.content[i],root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
             }
             break;
         case "password":
@@ -101,11 +102,11 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
         case "number":
         case "range":
         case "logrange":
-            param.value = flexibleParams.getParamValues(param,root,quantityCountList);
+            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
             break;
         case "selection":
         case "selection-multiple":
-            param.value = flexibleParams.getParamValues(param,root,quantityCountList);
+            param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
             for(var i = 0; i < param.values.length; i++) {
                 if(param.values[i].params != undefined &&
                    (withIrrelevant || param.value == param.values[i].name   // todo too global ....
@@ -127,20 +128,30 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
 /**
  * returns an array with the values contained in the elements
  */
-flexibleParams.getParamValues = function (param,root,quantityCountList,quantityPosition) {
+flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition) {
     if(quantityPosition == undefined) {
         quantityPosition = [];
     }
     
     if(quantityCountList.length == 0) {
         var paramElem = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition));
-        if(param.type == "selection-multiple") {
+        if(param.type == "selection-multiple" || param.type == "selection") {
             var result = [];
             var options = paramElem.options;
             for(var i=0; i < options.length; i++) {
                 if(options[i].selected) {
-                    result.push(options[i].value);
+                    var params = undefined;
+                    if(param.values[i].params != undefined && !withIrrelevant) {
+                        params = JSON.parse(JSON.stringify(param.values[i].params));
+                        var tmpGroup = {"type": "group", "content": params};
+                        flexibleParams.storeParamValues(tmpGroup,root,withIrrelevant,exceptPasswords,[],quantityPosition);
+                    }
+                        
+                    result.push({"name": options[i].value, "params": params});
                 }
+            }
+            if(param.type == "selection") {
+                return result[0];
             }
             return result;
         } else {
@@ -149,7 +160,7 @@ flexibleParams.getParamValues = function (param,root,quantityCountList,quantityP
     } else {
         var result = [];
         for(var i=0; i < quantityCountList[0]; i++) {
-            result.push(flexibleParams.getParamValues(param,root,quantityCountList.slice(1),quantityPosition.concat(i)));
+            result.push(flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList.slice(1),quantityPosition.concat(i)));
         }
         return result;
     }
@@ -470,15 +481,40 @@ flexibleParams.createSelection = function (param, quantityPosition) {
             }
             
             set.appendChild(opt_radio);
-            var tmpGroup = {"name": name+"_SelectionGroup_"+i,
+            var tmpGroup = {"name": name+quantityIdSuffix+"_SelectionGroup_"+i,
                             "content": values[i].params};
+            var tmpI;
+            if(value != undefined && typeof value == "object" &&
+               value.name == values[i].name && value.params != undefined
+              ) {
+                tmpGroup.content = value.params;
+            } else if(value != undefined && type == "selection-multiple" &&
+                      -1 != (tmpI = value.findIndex(function(e) { // todo too bulky
+                                 if(typeof e != "object" || e == null) {
+                                     return false;
+                                 }
+                                 return e.name == values[i].name;
+                             })) && value[tmpI].params != undefined
+                     ) {
+                tmpGroup.content = value[tmpI].params;
+            }
             set.appendChild(flexibleParams.createGroup(tmpGroup, quantityPosition));
         }
         
         if(value != undefined &&
            ((typeof value == "string" && value == values[i].name) ||
             (typeof value == "number" && value == i) ||
-            (type == "selection-multiple" && (value.includes(i) || value.includes(values[i].name)))
+            (typeof value == "object" && value.name == values[i].name) ||
+            (type == "selection-multiple" && (value.includes(i) ||
+                                              value.includes(values[i].name) ||
+                                              -1 != value.findIndex(function(e) { // todo too bulky
+                                                  if(typeof e != "object" || e == null) {
+                                                      return false;
+                                                  }
+                                                  return e.name == values[i].name;
+                                              })
+                                             )
+            )
            )
           ) {
             opt.selected = true;
