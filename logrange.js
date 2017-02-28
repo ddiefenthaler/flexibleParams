@@ -7,12 +7,16 @@ logrange.config.snap_dist = 0.08;
 
 logrange.log = function (x) {
     switch(logrange.config.base) {
-        case 2:
-            return Math.log2(x);
-        case 10:
-            return Math.log10(x);
         case Math.E:
             return Math.log(x);
+        case 2:
+            if(Math.log2 != undefined) {
+                return Math.log2(x);
+            }
+        case 10:
+            if(Math.log10 != undefined && logrange.config.base == 10) {
+                return Math.log10(x);
+            }
         default:
             return Math.log(x)/Math.log(logrange.config.base);
     }
@@ -27,7 +31,7 @@ logrange.range_modified = function (number,range) {
         snappoints_range = snappoints.map(logrange.log);
     }
     
-    var change = new Event("change");
+    var change = new InputEvent("change");
     
     for(var i=0; i < snappoints_range.length; i++) {
         if(Math.abs(snappoints_range[i] - range.value) < logrange.config.snap_dist) {
@@ -44,6 +48,7 @@ logrange.range_modified = function (number,range) {
 }
 
 logrange.update_range = function (number,range,target) {
+    
     var hardMax = Infinity;
     var hardMin = 0;
     
