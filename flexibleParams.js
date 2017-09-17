@@ -106,10 +106,11 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
             break;
         case "selection":
         case "selection-multiple":
+        // todo input based
             param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
             for(var i = 0; i < param.values.length; i++) {
                 if(param.values[i].params != undefined &&
-                   (withIrrelevant || param.value == param.values[i].name   // todo too global ....
+                   (withIrrelevant || param.value == param.values[i].name   // todo too global .... (does not work with quantity != 1 (?))
                                    || (Array.isArray(param.value) && param.values.indexOf(param.values[i].name) != -1))
                   ) {
                     console.log(param.values[i]);
@@ -136,6 +137,7 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
     if(quantityCountList.length == 0) {
         var paramElem = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition));
         if(param.type == "selection-multiple" || param.type == "selection") {
+        // todo
             var result = [];
             var options = paramElem.options;
             for(var i=0; i < options.length; i++) {
@@ -202,6 +204,9 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
             }*/
         case "selection":   // implicit group for additional parameters
         case "selection-multiple":
+        case "radio":
+        case "checkbox":
+        case "tab":
             if(quantity == undefined ||
                (isNaN(quantity) && root.querySelector("#"+quantity) == null)
               ) {
@@ -426,12 +431,17 @@ flexibleParams.createSelection = function (param, quantityPosition) {
         quantityPosition = [];
     }
     
+    var multiple = false;
+    if(type == "selection-multiple" || type == "checkbox") {
+        multiple = true;
+    }
+    
     var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
     
     for(var i=0; i < quantityPosition.length; i++) {
         if(Array.isArray(value) && quantityPosition[i] < value.length &&
-           (type != "selection-multiple" ||
-           (type == "selection-multiple" && Array.isArray(value[i])))
+           (!multiple ||
+           ( multiple && Array.isArray(value[i])))
           ) {
             value = value[quantityPosition[i]];
         } else {
@@ -441,7 +451,6 @@ flexibleParams.createSelection = function (param, quantityPosition) {
     
     var set = document.createElement("fieldset");
     var cont = document.createElement("div");
-    var sel = document.createElement("select");
     
     set.setAttribute("class","flexibleParams_container");
     if(flexibleParams.linebreak) {
@@ -449,41 +458,80 @@ flexibleParams.createSelection = function (param, quantityPosition) {
         flexibleParams.linebreak = false;
     }
     cont.setAttribute("class","flexibleParams_container");
-    sel.setAttribute("name",name+quantityIdSuffix);
-    sel.setAttribute("id",name+quantityIdSuffix);
-    sel.setAttribute("class","flexibleParams_input");
-    if(type == "selection-multiple") {
-        sel.multiple = true;
-    }
-    if(size != undefined) {
-        sel.setAttribute("size",size);
-    }
     
     if(param.label) {
         var label = document.createElement("label");
         var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
         label.appendChild(document.createTextNode(param.label+quantityLabelSuffix));
-        label.setAttribute("for",name+quantityIdSuffix);
+        if(type == "selection" || type == "selection-multiple") {
+            label.setAttribute("for",name+quantityIdSuffix);
+        }
         label.setAttribute("class","flexibleParams_label");
         
         cont.appendChild(label);
     }
-    cont.appendChild(sel);
+    if(type == "selection" || type == "selection-multiple") {
+        var sel = document.createElement("select");
+        sel.setAttribute("name",name+quantityIdSuffix);
+        sel.setAttribute("id",name+quantityIdSuffix);
+        sel.setAttribute("class","flexibleParams_input");
+        if(type == "selection-multiple") {
+            sel.multiple = true;
+        }
+        if(size != undefined) {
+            sel.setAttribute("size",size);
+        }
+        cont.appendChild(sel);
+    }
+    
     set.appendChild(cont);
     
     for(var i=0; i < values.length; i++) {
-        var opt = document.createElement("option");
-        opt.setAttribute("value",values[i].name);
-        if(values[i].label) {
-            opt.appendChild(document.createTextNode(values[i].label));
-        } else {
-            opt.appendChild(document.createTextNode(values[i].name));
+        if(type == "selection" || type == "selection-multiple") {
+            var opt = document.createElement("option");
+            opt.setAttribute("value",values[i].name);
+            if(values[i].label) {
+                opt.appendChild(document.createTextNode(values[i].label));
+            } else {
+                opt.appendChild(document.createTextNode(values[i].name));
+            }
+            sel.appendChild(opt);
+        } else if(type == "radio" || type == "checkbox" || type == "tab") {
+            var opt = document.createElement("input");
+            opt.setAttribute("name",name+quantityIdSuffix);
+            if(type == "tab") {
+                opt.setAttribute("type","radio");
+                opt.setAttribute("class","flexibleParams_tabHelper");
+                if(i == 0) {
+                    opt.checked = true;
+                }
+            } else {
+                opt.setAttribute("type",type);
+            }
+            opt.setAttribute("value",values[i].name);
+            opt.setAttribute("id",name+quantityIdSuffix+values[i].name);
+            opt.addEventListener("change",function(e) {
+                if(document.getElementById(e.target.id+"_selectionHelper") != null) {
+                    document.getElementById(e.target.id+"_selectionHelper").checked = e.target.checked;
+                }
+            });
+            var optLabel = document.createElement("label");
+            if(values[i].label) {
+                optLabel.appendChild(document.createTextNode(values[i].label));
+            } else {
+                optLabel.appendChild(document.createTextNode(values[i].name));
+            }
+            optLabel.setAttribute("for",name+quantityIdSuffix+values[i].name);
+            if(type == "tab") {
+                optLabel.setAttribute("class","flexibleParams_tab")
+            }
+            cont.appendChild(opt);
+            cont.appendChild(optLabel);
         }
-        sel.appendChild(opt);
         
         if(values[i].params != undefined) {
             var opt_radio = document.createElement("input");
-            if(type != "selection-multiple") {
+            if(!multiple) {
                 opt_radio.setAttribute("type","radio");
             } else {
                 opt_radio.setAttribute("type","checkbox");
@@ -503,7 +551,7 @@ flexibleParams.createSelection = function (param, quantityPosition) {
                value.name == values[i].name && value.params != undefined
               ) {
                 tmpGroup.content = value.params;
-            } else if(value != undefined && type == "selection-multiple" &&
+            } else if(value != undefined && multiple &&
                       -1 != (tmpI = value.findIndex(function(e) { // todo too bulky
                                  if(typeof e != "object" || e == null) {
                                      return false;
@@ -520,32 +568,38 @@ flexibleParams.createSelection = function (param, quantityPosition) {
            ((typeof value == "string" && value == values[i].name) ||
             (typeof value == "number" && value == i) ||
             (typeof value == "object" && value.name == values[i].name) ||
-            (type == "selection-multiple" && (value.includes(i) ||
-                                              value.includes(values[i].name) ||
-                                              -1 != value.findIndex(function(e) { // todo too bulky
-                                                  if(typeof e != "object" || e == null) {
-                                                      return false;
-                                                  }
-                                                  return e.name == values[i].name;
-                                              })
-                                             )
+            (multiple && (value.includes(i) ||
+                          value.includes(values[i].name) ||
+                          -1 != value.findIndex(function(e) { // todo too bulky
+                              if(typeof e != "object" || e == null) {
+                                  return false;
+                              }
+                              return e.name == values[i].name;
+                          })
+                         )
             )
            )
           ) {
-            opt.selected = true;
+            if(type == "selection" || type == "selection-multiple") {
+                opt.selected = true;
+            } else {
+                opt.checked = true;
+            }
             if(values[i].params != undefined) {
                 opt_radio.checked = true;
             }
         }
     }
     
-    sel.addEventListener("change",function(e) {
-        for(var i = 0; i < e.target.options.length; i++) {
-            if(document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper") != null) {
-                document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper").checked = e.target.options[i].selected;
+    if(type == "selection" || type == "selection-multiple") {
+        sel.addEventListener("change",function(e) {
+            for(var i = 0; i < e.target.options.length; i++) {
+                if(document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper") != null) {
+                    document.getElementById(e.target.id+e.target.options[i].value+"_selectionHelper").checked = e.target.options[i].selected;
+                }
             }
-        }
-    });
+        });
+    }
     
     return set;
 }

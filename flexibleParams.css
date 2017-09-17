@@ -32,6 +32,16 @@
     display: inline-block;
 }
 
+.flexibleParams_tab {
+    border: thin solid lightgrey;
+}
+.flexibleParams_tabHelper {
+    display: none;
+}
+.flexibleParams_tabHelper:checked + .flexibleParams_tab {
+    border: thin solid black;
+}
+
 .flexibleParams_quantityHelper {
     display: none;
 }
