@@ -112,11 +112,8 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
       param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
       for(var i = 0; i < param.values.length; i++) {
         if(param.values[i].params != undefined &&
-           (withIrrelevant || param.includeAll == true
-                           || param.value == param.values[i].name   // todo too global .... (does not work with quantity != 1 (?))
-                           || (Array.isArray(param.value) && param.values.indexOf(param.values[i].name) != -1))
+           (withIrrelevant || param.includeAll == true)
           ) {
-          console.log(param.values[i]);
           for(var j = 0; j < param.values[i].params.length; j++) {
             flexibleParams.storeParamValues(param.values[i].params[j],root,withIrrelevant,exceptPasswords,quantityCountList);
           }
@@ -139,32 +136,21 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
 
   if(quantityCountList.length == 0) {
     var paramElem = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition));
-    if(param.type == "selection-multiple" || param.type == "selection") {
-      var result = [];
-      var options = paramElem.options;
-      for(var i=0; i < options.length; i++) {
-        if(options[i].selected) {
-          var params = undefined;
-          if(param.values[i].params != undefined && !withIrrelevant) {
-            params = JSON.parse(JSON.stringify(param.values[i].params));
-            var tmpGroup = {"type": "group", "content": params};
-            flexibleParams.storeParamValues(tmpGroup,root,withIrrelevant,exceptPasswords,[],quantityPosition);
-          }
-
-          result.push({"name": options[i].value, "params": params});
-        }
-      }
-      if(param.type == "selection") {
-        return result[0];
-      }
-      return result;
-    } else if(param.type == "radio" || param.type == "checkbox" || param.type == "tab") {
+    if(param.type == "selection-multiple" || param.type == "selection" ||
+       param.type == "radio" || param.type == "checkbox" || param.type == "tab") {
+      var inpBased = param.type == "radio" || param.type == "checkbox" || param.type == "tab";
       var result = [];
       for(var i=0; i < param.values.length; i++) {
-        var opt = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)+param.values[i].name); // querySelectorAll instead ?
-        if(opt.checked) {
+        var opt;
+        if(!inpBased) {
+          opt = paramElem.options[i];
+        } else {
+          opt = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition)+param.values[i].name);
+        }
+        if((!inpBased && opt.selected) ||
+           ( inpBased && opt.checked)) {
           var params = undefined;
-          if(param.values[i].params != undefined && !withIrrelevant && (param.type != "tab" || !param.includeAll)) {
+          if(param.values[i].params != undefined && !withIrrelevant && !param.includeAll) {
             params = JSON.parse(JSON.stringify(param.values[i].params));
             var tmpGroup = {"type": "group", "content": params};
             flexibleParams.storeParamValues(tmpGroup,root,withIrrelevant,exceptPasswords,[],quantityPosition);
@@ -173,7 +159,7 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
           result.push({"name": opt.value, "params": params});
         }
       }
-      if(param.type != "checkbox") {
+      if(param.type != "selection-multiple" && param.type != "checkbox") {
         return result[0];
       }
       return result;
@@ -190,9 +176,8 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
 }
 
 /**
- * truncates the param object to a minimum
- * this creates a copy of the object as the result is only useful for transmission
- * todo clear unneeded dynamic quantity values
+ * truncates the param object to reduce size
+ * this creates a copy of the object as this process discards information
  */
 flexibleParams.truncateParam = function (param,withIrrelevant) {
   var result = {};
@@ -203,7 +188,7 @@ flexibleParams.truncateParam = function (param,withIrrelevant) {
       result.content = [];
       for(var i=0; i < param.content.length; i++) {
         var subParam = flexibleParams.truncateParam(param.content[i]);
-        if(subParam != {}) {
+        if(subParam.name != undefined) {
           result.content.push(subParam);
         }
       }
@@ -215,6 +200,7 @@ flexibleParams.truncateParam = function (param,withIrrelevant) {
     case "range":
     case "logrange":
       result.value = JSON.parse(JSON.stringify(param.value));
+      break;
     case "selection":
     case "selection-multiple":
     case "radio":
