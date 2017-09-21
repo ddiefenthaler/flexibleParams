@@ -190,6 +190,77 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
 }
 
 /**
+ * truncates the param object to a minimum
+ * this creates a copy of the object as the result is only useful for transmission
+ * todo clear unneeded dynamic quantity values
+ */
+flexibleParams.truncateParam = function (param,withIrrelevant) {
+  var result = {};
+  result.name = param.name;
+  result.type = param.type;
+  switch(param.type) {
+    case "group":
+      result.content = [];
+      for(var i=0; i < param.content.length; i++) {
+        var subParam = flexibleParams.truncateParam(param.content[i]);
+        if(subParam != {}) {
+          result.content.push(subParam);
+        }
+      }
+      break;
+    case "text":
+    case "password":
+    case "hidden":
+    case "number":
+    case "range":
+    case "logrange":
+      result.value = JSON.parse(JSON.stringify(param.value));
+    case "selection":
+    case "selection-multiple":
+    case "radio":
+    case "checkbox":
+    case "tab":
+      result.value = flexibleParams.truncateSelectionValueParams(param.value);
+      if(withIrrelevant || param.includeAll) {
+        result.values = [];
+        for(var i=0; i < param.values.length; i++) {
+          var tmpValue = {"name": param.values[i].name};
+          if(param.values[i].params != undefined) {
+            var tmpGroup = {"type": "group", "content": param.values[i].params};
+            tmpValue.params = flexibleParams.truncateParam(tmpGroup).content;
+          }
+          result.values.push(tmpValue);
+        }
+      }
+      break;
+    case "br":
+      return {};
+      break;
+    default:
+      console.warn("unknown parameter type: "+param.type);
+      break;
+  }
+  return result;
+}
+
+flexibleParams.truncateSelectionValueParams = function (value) {
+  if(Array.isArray(value)) {
+    var result = [];
+    for(var i=0; i < value.length; i++) {
+      result.push(flexibleParams.truncateSelectionValueParams(value[i]));
+    }
+    return result;
+  } else {
+    var result = {"name": value.name, "params": undefined};
+    if(value.params != undefined) {
+      var tmpGroup = {"type": "group", "content": value.params};
+      result.params = flexibleParams.truncateParam(tmpGroup).content;
+    }
+    return result;
+  }
+}
+
+/**
  * creates the specified param and calls the appropriate function
  * supported parameter types are:
  *  group
