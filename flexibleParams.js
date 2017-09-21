@@ -1,12 +1,8 @@
-// todo logrange javascript
-// todo id-bound class names for container
-// todo store form + information in history (except passwords)
 // todo code cleaning
 // todo callback function for more customisation
 // todo concept graphics
 
 var flexibleParams = new Object();
-flexibleParams.linebreak = false;   // todo too global
 
 flexibleParams.config = new Object();
 flexibleParams.config.maxQuantityDefault = 64;
@@ -254,17 +250,23 @@ flexibleParams.truncateSelectionValueParams = function (value) {
  *  password
  *  number
  *  range
- *  todo logrange
+ *  logrange
  *  selection
  *  selection-multiple
+ *  radio
+ *  checkbox
+ *  tab
  *  br - meta
  */
-flexibleParams.createParam = function (param,quantityPosition,root) {
+flexibleParams.createParam = function (param,quantityPosition,root,linebreak) {
   var quantity = param.quantity;
   var result = undefined;
+  if(linebreak == undefined) {
+    linebreak = {"val": false};
+  }
   switch(param.type) {
     case "group":       // fieldset
-      result = flexibleParams.createGroup(param,quantityPosition,root);
+      result = flexibleParams.createGroup(param,quantityPosition,root,linebreak);
       break;
     case "text":
     case "password":
@@ -275,7 +277,7 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
       if(quantity == undefined ||
          (isNaN(quantity) && root.querySelector("#"+quantity) == null)
         ) {
-        result = flexibleParams.createInputParam(param,quantityPosition);
+        result = flexibleParams.createInputParam(param,quantityPosition,linebreak);
         break;
       }/* else {
         // see else branch in next case
@@ -288,19 +290,19 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
       if(quantity == undefined ||
          (isNaN(quantity) && root.querySelector("#"+quantity) == null)
         ) {
-        result = flexibleParams.createSelection(param,quantityPosition);
+        result = flexibleParams.createSelection(param,quantityPosition,linebreak);
       } else {
         var tmpGroup = {"name":        param.name+"_quantityGroup",
                         "content":    [param],
                         "quantity":    param.quantity,
                         "maxQuantity": param.maxQuantity};
         param.quantity = undefined;
-        result = flexibleParams.createGroup(tmpGroup,quantityPosition,root);
+        result = flexibleParams.createGroup(tmpGroup,quantityPosition,root,linebreak);
         param.quantity = quantity;
       }
       break;
     case "br":    // css only linebreak
-      flexibleParams.linebreak = true;
+      linebreak.val = true;
       break;
     default:
       console.warn("unknown parameter type: "+param.type);
@@ -312,10 +314,13 @@ flexibleParams.createParam = function (param,quantityPosition,root) {
 /**
  * creates a group (fieldset) with the specified contents and quantity
  */
-flexibleParams.createGroup = function (param,quantityPosition,root) {
+flexibleParams.createGroup = function (param,quantityPosition,root,linebreak) {
   var quantity = param.quantity;
   if(quantityPosition == undefined) {
     quantityPosition = [];
+  }
+  if(linebreak == undefined) {
+    linebreak = {"val": false};
   }
 
   var quantityIdSuffix = flexibleParams.config.getIdSuffix(quantityPosition);
@@ -323,9 +328,9 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
   var group = document.createElement("fieldset");
   group.setAttribute("id",param.name+quantityIdSuffix);
   group.setAttribute("class","flexibleParams_container");
-  if(flexibleParams.linebreak) { // todo parallelism problem
+  if(linebreak.val) {
     group.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
-    flexibleParams.linebreak = false;
+    linebreak.val = false;
   }
 
   if(root == undefined) {
@@ -373,7 +378,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
 
   for(var k = 0; k < quantityCount; k++) {
     if(k != 0 && param.content.length != 1) {
-      flexibleParams.linebreak = true;
+      linebreak.val = true;
     }
     var subgroupQuantityPosition = quantityPosition;
     if(quantityCount > 1) {
@@ -382,7 +387,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
 
     // Main for loop that creates the content parameter
     for(var i = 0; i < param.content.length; i++) {
-      var paramElem = flexibleParams.createParam(param.content[i],subgroupQuantityPosition,root);
+      var paramElem = flexibleParams.createParam(param.content[i],subgroupQuantityPosition,root,linebreak);
       if(paramElem != undefined) {
         group.appendChild(paramElem);
       }
@@ -408,7 +413,7 @@ flexibleParams.createGroup = function (param,quantityPosition,root) {
 /**
  * creates a input field in a container with specified type and values
  */
-flexibleParams.createInputParam = function (param, quantityPosition) {
+flexibleParams.createInputParam = function (param, quantityPosition, linebreak) {
   var name = param.name;
   var type = param.type;
   var value = param.value;
@@ -434,9 +439,9 @@ flexibleParams.createInputParam = function (param, quantityPosition) {
   var input_range;
 
   cont.setAttribute("class","flexibleParams_container");
-  if(flexibleParams.linebreak) {
+  if(linebreak.val) {
     cont.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
-    flexibleParams.linebreak = false;
+    linebreak.val = false;
   }
 
   if(type == "logrange") {
@@ -499,7 +504,7 @@ flexibleParams.createInput = function (name,type,value,min,max,step) {
 /**
  * creates a selection field with specified values
  */
-flexibleParams.createSelection = function (param, quantityPosition) {
+flexibleParams.createSelection = function (param, quantityPosition, linebreak) {
   var name = param.name;
   var type = param.type;
   var values = param.values;
@@ -531,9 +536,9 @@ flexibleParams.createSelection = function (param, quantityPosition) {
   var cont = document.createElement("div");
 
   set.setAttribute("class","flexibleParams_container");
-  if(flexibleParams.linebreak) {
+  if(linebreak.val) {
     set.setAttribute("class","flexibleParams_container"+" flexibleParams_linebreak");
-    flexibleParams.linebreak = false;
+    linebreak.val = false;
   }
   cont.setAttribute("class","flexibleParams_container");
 
