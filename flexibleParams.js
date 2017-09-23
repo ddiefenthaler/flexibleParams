@@ -106,7 +106,7 @@ flexibleParams.storeParamValues = function (param,root,withIrrelevant,exceptPass
     case "checkbox":
     case "tab":
       param.value = flexibleParams.getParamValues(param,root,withIrrelevant,exceptPasswords,quantityCountList,quantityPosition);
-      for(var i = 0; i < param.values.length; i++) {
+      for(var i = 0; param.values != undefined && i < param.values.length; i++) {
         if(param.values[i].params != undefined &&
            (withIrrelevant || param.includeAll == true)
           ) {
@@ -132,6 +132,9 @@ flexibleParams.getParamValues = function (param,root,withIrrelevant,exceptPasswo
 
   if(quantityCountList.length == 0) {
     var paramElem = root.querySelector("#"+param.name+flexibleParams.config.getIdSuffix(quantityPosition));
+    if(param.type == "checkbox" && param.values == undefined) {
+      return paramElem.checked;
+    }
     if(param.type == "selection-multiple" || param.type == "selection" ||
        param.type == "radio" || param.type == "checkbox" || param.type == "tab") {
       var inpBased = param.type == "radio" || param.type == "checkbox" || param.type == "tab";
@@ -203,7 +206,7 @@ flexibleParams.truncateParam = function (param,withIrrelevant) {
     case "checkbox":
     case "tab":
       result.value = flexibleParams.truncateSelectionValueParams(param.value);
-      if(withIrrelevant || param.includeAll) {
+      if(param.values != undefined && (withIrrelevant || param.includeAll)) {
         result.values = [];
         for(var i=0; i < param.values.length; i++) {
           var tmpValue = {"name": param.values[i].name};
@@ -233,8 +236,11 @@ flexibleParams.truncateSelectionValueParams = function (value) {
     }
     return result;
   } else {
+    if(value == true || value == false) {
+      return value;
+    }
     var result = {"name": value.name, "params": undefined};
-    if(value.params != undefined) {
+    if(value.params != undefined) { // todo perhaps only return value.name otherwise
       var tmpGroup = {"type": "group", "content": value.params};
       result.params = flexibleParams.truncateParam(tmpGroup).content;
     }
@@ -546,7 +552,7 @@ flexibleParams.createSelection = function (param, quantityPosition, linebreak) {
     var label = document.createElement("label");
     var quantityLabelSuffix = flexibleParams.config.getLabelSuffix(quantityPosition);
     label.appendChild(document.createTextNode(param.label+quantityLabelSuffix));
-    if(type == "selection" || type == "selection-multiple") {
+    if(type == "selection" || type == "selection-multiple" || (type == "checkbox" && param.values == undefined)) {
       label.setAttribute("for",name+quantityIdSuffix);
     }
     label.setAttribute("class","flexibleParams_label");
@@ -565,11 +571,21 @@ flexibleParams.createSelection = function (param, quantityPosition, linebreak) {
       sel.setAttribute("size",size);
     }
     cont.appendChild(sel);
+  } else if(type == "checkbox" && param.values == undefined) {
+    var opt = document.createElement("input");
+    opt.setAttribute("name",name+quantityIdSuffix);
+    opt.setAttribute("id",name+quantityIdSuffix);
+    opt.setAttribute("type",type);
+    opt.setAttribute("value","true");
+    if(param.value == true) { // todo consider quantityPosition
+      opt.checked = true;
+    }
+    cont.appendChild(opt);
   }
 
   set.appendChild(cont);
 
-  for(var i=0; i < values.length; i++) {
+  for(var i=0; values != undefined && i < values.length; i++) {
     if(type == "selection" || type == "selection-multiple") {
       var opt = document.createElement("option");
       opt.setAttribute("value",values[i].name);
