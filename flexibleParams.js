@@ -671,6 +671,9 @@ flexibleParams.createSelection = function (param,quantityPosition,root,ancestor,
                ) {
         tmpGroup.content = value[tmpI].params;
       }
+      if(type == "tab") {
+        linebreak.val = true;
+      }
       flexibleParams.createGroup(tmpGroup,quantityPosition,root,set,linebreak);
     }
 
